@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Front Desk | Professional Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <span>Digital Front Desk <span style="color: var(--text-muted); font-weight: 400; margin-left: 5px;">Pro</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 2rem;">
+            <button class="btn btn-primary" onclick="toggleQR()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 5px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Share Intake Form
+            </button>
+            <div style="text-align: right;">
+                <div id="live-clock" style="font-family: 'JetBrains Mono'; font-weight: 600;">00:00:00</div>
+                <div style="font-size: 0.7rem; color: var(--success); display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
+                    <span style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></span>
+                    SYSTEM ONLINE
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="overlay" onclick="toggleQR()">
+        <div class="side-panel open" style="right: 50%; transform: translateX(50%); height: auto; top: 15%; border-radius: 24px; text-align: center; width: 450px; border: 1px solid var(--accent);" onclick="event.stopPropagation()">
+            <h2 style="margin-bottom: 1rem;">Client Access Portal</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">Direct clients to the premium intake form</p>
+            <div id="qrcode" style="background: white; padding: 25px; display: inline-block; border-radius: 16px; margin-bottom: 2rem; box-shadow: 0 0 30px rgba(255,255,255,0.1);"></div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 2rem;">
+                <span class="stat-label" style="margin-bottom: 0.5rem; display: block;">Portal URL</span>
+                <code id="form-link" style="color: var(--accent); font-family: 'JetBrains Mono'; word-break: break-all;"></code>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="toggleQR()">Dismiss</button>
+        </div>
+    </div>
+
+    <main class="container animate-up">
+        <!-- Key Metrics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Volume</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Quality</div>
+                <div class="stat-value" id="stat-avg" style="color: var(--accent)">0.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High Priority</div>
+                <div class="stat-value" id="stat-priority" style="color: var(--success)">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Conv. Rate</div>
+                <div class="stat-value" id="stat-conversion">0%</div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+            <!-- Queue -->
+            <div class="section-box">
+                <div style="padding: 1.5rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="font-size: 1.1rem;">Intake Queue</h3>
+                    <span class="badge badge-blue" id="queue-count">0 Active</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Recieved</th>
+                            <th>Client Specifications</th>
+                            <th>AI Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-body"></tbody>
+                </table>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="section-box" style="padding: 1.5rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1.5rem;">System Activity</h3>
+                <div id="activity-feed" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <!-- Activity items -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Side Detail Panel -->
+    <div class="overlay" id="detail-overlay" onclick="closeLead()"></div>
+    <div class="side-panel" id="detail-panel">
+        <div id="panel-content"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // State
+        let leads = [];
+
+        // UI Initialization
+        const formUrl = window.location.origin + "/apply";
+        document.getElementById('form-link').innerText = formUrl;
+        new QRCode(document.getElementById("qrcode"), { text: formUrl, width: 200, height: 200 });
+
+        function updateClock() {
+            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+
+        function toggleQR() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.toggle('show');
+        }
+
+        // Dashboard Data
+        async function refreshData() {
+            const [statsRes, leadsRes] = await Promise.all([
+                fetch('/api/stats'),
+                fetch('/api/leads')
+            ]);
+            
+            const stats = await statsRes.json();
+            leads = await leadsRes.json();
+
+            updateUI(stats, leads);
+        }
+
+        function updateUI(stats, leadsData) {
+            // Stats
+            document.getElementById('stat-total').innerText = stats.total_leads;
+            document.getElementById('stat-avg').innerText = stats.avg_score;
+            document.getElementById('stat-priority').innerText = stats.book_now_count;
+            document.getElementById('stat-conversion').innerText = stats.conversion_rate + '%';
+            document.getElementById('queue-count').innerText = leadsData.length + ' Leads';
+
+            // Table
+            const body = document.getElementById('leads-body');
+            body.innerHTML = leadsData.map(l => {
+                const date = new Date(l.created_at);
+                const scoreClass = l.ai_score >= 8 ? 'badge-green' : (l.ai_score >= 5 ? 'badge-amber' : 'badge-red');
+                return `
+                    <tr onclick="openLead(${l.id})">
+                        <td style="font-family: 'JetBrains Mono'; font-size: 0.8rem;">${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary)">${l.client_name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${l.ai_summary}</div>
+                        </td>
+                        <td><span class="badge ${scoreClass}">${l.ai_score}/10</span></td>
+                        <td><span class="badge" style="background: rgba(255,255,255,0.05)">${l.action_taken}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Activity Feed (Top 5)
+            const feed = document.getElementById('activity-feed');
+            feed.innerHTML = leadsData.slice(0, 5).map(l => `
+                <div style="display: flex; gap: 1rem; align-items: flex-start; border-left: 2px solid var(--card-border); padding-left: 1rem;">
+                    <div style="min-width: 45px; font-family: 'JetBrains Mono'; font-size: 0.7rem; color: var(--text-muted);">
+                        ${new Date(l.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 500;">${l.client_name} <span style="color: var(--text-muted)">filed a claim</span></div>
+                        <div style="font-size: 0.75rem; color: ${l.ai_score >= 8 ? 'var(--success)' : 'var(--accent)'}">${l.ai_tier}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openLead(id) {
+            const lead = leads.find(l => l.id === id);
+            const redFlags = JSON.parse(lead.red_flags || '[]');
+            
+            const content = `
+                <div style="margin-bottom: 3rem;">
+                    <span class="badge badge-blue" style="margin-bottom: 1rem;">CASE FILE #00${lead.id}</span>
+                    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">${lead.client_name}</h1>
+                    <div style="color: var(--text-muted); display: flex; gap: 1rem; font-size: 0.9rem;">
+                        <span>Received ${new Date(lead.created_at).toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 3rem;">
+                    <div class="stat-card" style="text-align: center; padding: 1rem;">
+                        <div class="score-circle">${lead.liability_score}</div>
+                        <div class="stat-label">Liability</div>
+                    </div>
+                    <div class="stat-card" style="text-align: center; padding: 1rem;">
+                        <div class="score-circle">${lead.damages_score}</div>
+                        <div class="stat-label">Damages</div>
+                    </div>
+                    <div class="stat-card" style="text-align: center; padding: 1rem;">
+                        <div class="score-circle">${lead.sol_score}</div>
+                        <div class="stat-label">SOL</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--accent);">AI Analysis</h3>
+                    <div style="background: var(--glass); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--card-border);">
+                        <p style="font-size: 1.1rem; line-height: 1.7;">${lead.ai_summary}</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="margin-bottom: 1rem;">Flags Detected</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${redFlags.length ? redFlags.map(f => `<span class="badge badge-red">${f}</span>`).join('') : '<span style="color: var(--text-muted)">No red flags identified.</span>'}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="margin-bottom: 1rem;">Technical Specifications</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="background: var(--glass); padding: 1rem; border-radius: 8px;">
+                            <span class="stat-label">Location</span>
+                            <div style="font-size: 0.9rem;">${lead.incident_location}</div>
+                        </div>
+                        <div style="background: var(--glass); padding: 1rem; border-radius: 8px;">
+                            <span class="stat-label">Injuries Sustained</span>
+                            <div style="font-size: 0.9rem;">${lead.injuries_sustained}</div>
+                        </div>
+                    </div>
+                    <div style="background: var(--glass); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <span class="stat-label">Insurance Provider</span>
+                        <div style="font-size: 0.9rem;">${lead.insurance_info}</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; font-family: inherit; font-size: 0.95rem; white-space: pre-wrap; border-left: 4px solid var(--accent);">${lead.incident_description}</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <button class="btn btn-primary" onclick="override(${lead.id}, 'approved')">Accept Case</button>
+                    <button class="btn" style="background: var(--card-border); color: white;" onclick="override(${lead.id}, 'declined')">Decline</button>
+                </div>
+            `;
+
+            document.getElementById('panel-content').innerHTML = content;
+            document.getElementById('detail-panel').classList.add('open');
+            document.getElementById('detail-overlay').classList.add('show');
+        }
+
+        function closeLead() {
+            document.getElementById('detail-panel').classList.remove('open');
+            document.getElementById('detail-overlay').classList.remove('show');
+        }
+
+        async function override(id, status) {
+            await fetch(`/api/lead/${id}/override`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            });
+            closeLead();
+            refreshData();
+        }
+
+        setInterval(refreshData, 10000);
+        refreshData();
+    </script>
+</body>
+</html>

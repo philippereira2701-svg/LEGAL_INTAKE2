@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Priority Case Evaluation | Justice Law</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .form-max { max-width: 800px; margin: 4rem auto; }
+        .step-indicator { display: flex; gap: 1rem; margin-bottom: 3rem; }
+        .step { height: 4px; flex: 1; background: var(--card-border); border-radius: 2px; transition: background 0.3s; }
+        .step.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+        .form-section { display: none; }
+        .form-section.active { display: block; animation: slideUp 0.4s ease-out; }
+    </style>
+</head>
+<body>
+    <div class="container form-max">
+        <header style="text-align: center; margin-bottom: 4rem;">
+            <div class="logo-box" style="margin: 0 auto 1.5rem; width: 56px; height: 56px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Justice<span style="color: var(--accent)">Law</span> Intake</h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Instant AI-powered case triage for personal injury claims.</p>
+        </header>
+
+        <div class="step-indicator">
+            <div class="step active" id="s1"></div>
+            <div class="step" id="s2"></div>
+            <div class="step" id="s3"></div>
+        </div>
+
+        <div class="section-box" style="padding: 3rem;">
+            <form id="premium-intake-form">
+                <!-- Step 1: Personal Specs -->
+                <div class="form-section active" id="step1">
+                    <h2 style="margin-bottom: 2rem;">1. Client Specifications</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <label class="stat-label">Full Legal Name</label>
+                            <input type="text" id="name" class="form-input" placeholder="Johnathan Doe" required>
+                        </div>
+                        <div>
+                            <label class="stat-label">Incident Date</label>
+                            <input type="date" id="date" class="form-input" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                        <div>
+                            <label class="stat-label">Secure Email</label>
+                            <input type="email" id="email" class="form-input" placeholder="john@example.com" required>
+                        </div>
+                        <div>
+                            <label class="stat-label">Mobile Phone</label>
+                            <input type="tel" id="phone" class="form-input" placeholder="(555) 000-0000" required>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continue to Incident Specs →</button>
+                </div>
+
+                <!-- Step 2: Incident Specs -->
+                <div class="form-section" id="step2">
+                    <h2 style="margin-bottom: 2rem;">2. Incident Specifications</h2>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="stat-label">Location of Incident</label>
+                        <input type="text" id="location" class="form-input" placeholder="Intersection, City, State" required>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="stat-label">Case Description (Technical Details)</label>
+                        <textarea id="description" class="form-input" rows="5" placeholder="Describe precisely how the accident occurred..." required></textarea>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                        <div>
+                            <label class="stat-label">Police Report Filed?</label>
+                            <select id="police_report" class="form-input">
+                                <option value="yes">Yes, report filed</option>
+                                <option value="no">No report filed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="stat-label">Medical Treatment?</label>
+                            <select id="medical" class="form-input">
+                                <option value="yes">Yes, hospital/clinic visited</option>
+                                <option value="no">No treatment yet</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn" style="background: var(--card-border);" onclick="nextStep(1)">← Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue to Damages →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Damage Specs -->
+                <div class="form-section" id="step3">
+                    <h2 style="margin-bottom: 2rem;">3. Damage Specifications</h2>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label class="stat-label">Injuries Sustained</label>
+                        <input type="text" id="injuries" class="form-input" placeholder="Fractures, Whiplash, Concussion, etc." required>
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <label class="stat-label">Insurance Provider (If known)</label>
+                        <input type="text" id="insurance" class="form-input" placeholder="Defendant's or Your Insurance Company">
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="button" class="btn" style="background: var(--card-border);" onclick="nextStep(2)">← Back</button>
+                        <button type="submit" class="btn btn-primary" id="submit-btn" style="background: linear-gradient(135deg, var(--success), #059669);">
+                            Submit for AI Analysis
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Success/Error Screens -->
+            <div id="status-overlay" style="display: none; text-align: center; padding: 2rem;">
+                <div id="loader" style="margin-bottom: 2rem;">
+                    <div class="score-circle" style="border-color: var(--accent); animation: pulse 1.5s infinite;">...</div>
+                    <h3>Analyzing Case Data...</h3>
+                </div>
+                <div id="success-view" style="display: none;">
+                    <div class="score-circle" style="border-color: var(--success); color: var(--success);">✓</div>
+                    <h2 style="margin-bottom: 1rem;">Intake Successful</h2>
+                    <p id="feedback-msg" style="color: var(--text-secondary); margin-bottom: 2rem;"></p>
+                    <button class="btn btn-primary" onclick="location.reload()">Return to Home</button>
+                </div>
+                <div id="error-view" style="display: none;">
+                    <div class="score-circle" style="border-color: var(--danger); color: var(--danger);">!</div>
+                    <h2 style="margin-bottom: 1rem;">System Error</h2>
+                    <p id="error-msg" style="color: var(--text-secondary); margin-bottom: 2rem;"></p>
+                    <button class="btn btn-primary" onclick="hideStatus()">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function nextStep(s) {
+            document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step').forEach((el, idx) => {
+                if (idx < s) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            document.getElementById('step' + s).classList.add('active');
+        }
+
+        function hideStatus() {
+            document.getElementById('status-overlay').style.display = 'none';
+            document.getElementById('premium-intake-form').style.display = 'block';
+        }
+
+        document.getElementById('premium-intake-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = document.getElementById('premium-intake-form');
+            const overlay = document.getElementById('status-overlay');
+            form.style.display = 'none';
+            overlay.style.display = 'block';
+
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                date: document.getElementById('date').value,
+                description: document.getElementById('description').value,
+                location: document.getElementById('location').value,
+                injuries: document.getElementById('injuries').value,
+                insurance: document.getElementById('insurance').value,
+                police_report: document.getElementById('police_report').value,
+                medical: document.getElementById('medical').value
+            };
+
+            try {
+                const response = await fetch('/intake', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                document.getElementById('loader').style.display = 'none';
+
+                if (result.status === 'success') {
+                    const successView = document.getElementById('success-view');
+                    successView.style.display = 'block';
+                    document.getElementById('feedback-msg').innerText = result.action === 'AUTO_BOOK' 
+                        ? "Priority Status Confirmed. Please check your messages for an immediate booking link."
+                        : "Your case specifications have been received. An attorney will review and contact you shortly.";
+                } else {
+                    const errorView = document.getElementById('error-view');
+                    errorView.style.display = 'block';
+                    // Parse the JSON error if it's the Gemini API key issue
+                    let msg = result.message;
+                    if (msg.includes('API_KEY_INVALID')) {
+                        msg = "System Authentication Error: The Firm's AI API key is invalid or expired. Please contact support.";
+                    }
+                    document.getElementById('error-msg').innerText = msg;
+                }
+            } catch (err) {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('error-view').style.display = 'block';
+                document.getElementById('error-msg').innerText = "Network failure. Please ensure the backend is running.";
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+flask
+sqlalchemy
+google-genai
+pydantic
+python-dotenv
+twilio
