@@ -158,9 +158,9 @@ class DatabaseManager:
         session.close()
 
 if __name__ == "__main__":
-    # Clean restart of DB for new schema
-    if os.path.exists('legal_intake.db'):
-        os.remove('legal_intake.db')
+    # Clean restart of DB for new schema (Commented out to keep DB truncated)
+    # if os.path.exists('legal_intake.db'):
+    #     os.remove('legal_intake.db')
     db = DatabaseManager()
-    db.seed_data()
-    print("Database Architecture Updated.")
+    # db.seed_data()
+    print("Database Architecture Ready.")

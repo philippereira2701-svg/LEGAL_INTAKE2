@@ -19,8 +19,8 @@ scorer = IntakeScorer()
 router = ActionRouter()
 notifier = LawyerNotifier()
 
-# Seed DB with new schema
-db.seed_data()
+# Seed DB with new schema (Commented out to keep DB truncated)
+# db.seed_data()
 
 @app.route('/')
 def dashboard():
