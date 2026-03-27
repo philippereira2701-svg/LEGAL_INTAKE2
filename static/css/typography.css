@@ -1,0 +1,38 @@
+h1, h2, h3, h4, .display-xl, .display-lg, .display-md {
+    font-family: var(--font-display);
+    font-weight: 300;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--ls-tight);
+}
+
+.display-xl { font-size: var(--display-xl); }
+.display-lg { font-size: var(--display-lg); }
+.display-md { font-size: var(--display-md); }
+
+h1 { font-size: var(--h1); }
+h2 { font-size: var(--h2); }
+h3 { font-size: var(--h3); }
+h4 { font-size: var(--h4); }
+
+body, .body-lg, .small, .label, .micro {
+    font-family: var(--font-sans);
+    font-weight: 400;
+}
+
+.body-lg { font-size: var(--body-lg); }
+body { font-size: var(--body); }
+.small { font-size: var(--small); }
+.label { font-size: var(--label); letter-spacing: var(--ls-caps); text-transform: uppercase; }
+.micro { font-size: var(--micro); font-family: var(--font-mono); }
+
+.font-mono { font-family: var(--font-mono); }
+.font-legal { font-family: var(--font-legal); }
+
+.text-gold {
+    background: var(--gradient-text-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.italic { font-style: italic; }
+.accent-color { color: var(--accent-gold); }

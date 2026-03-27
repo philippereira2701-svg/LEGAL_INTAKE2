@@ -1,0 +1,116 @@
+#hero {
+    height: 100svh;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: var(--gradient-hero);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 60% 40%;
+    height: 100%;
+    align-items: center;
+}
+
+.hero-content {
+    padding-top: clamp(6rem, 12vh, 10rem);
+}
+
+.hero-eyebrow {
+    color: var(--accent-gold);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hero-eyebrow::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+
+.hero-title {
+    font-size: clamp(3.75rem, 7.5vw, 7rem);
+    line-height: 0.92;
+    margin-bottom: 2rem;
+}
+
+.hero-body {
+    font-size: var(--body-lg);
+    color: var(--text-secondary);
+    max-width: 38ch;
+    margin-bottom: 3rem;
+    line-height: 1.7;
+}
+
+.hero-search-container {
+    max-width: 600px;
+    position: relative;
+}
+
+.hero-search {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    transition: all 0.4s ease;
+}
+
+.hero-search:focus-within {
+    border-color: rgba(201, 169, 110, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-search input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.hero-suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.hero-right {
+    height: 100%;
+    position: relative;
+}
+
+.floating-cards-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    perspective: 1000px;
+}
+
+@media (max-width: 1024px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+    .hero-right {
+        display: none;
+    }
+}

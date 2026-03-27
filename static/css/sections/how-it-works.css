@@ -1,0 +1,74 @@
+#how_it_works {
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+.horizontal-scroll-wrapper {
+    display: flex;
+    width: 400%; /* Based on 4 steps */
+    height: 100vh;
+}
+
+.step-section {
+    width: 100vw;
+    height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--grid-padding);
+}
+
+.step-card {
+    width: clamp(300px, 28vw, 420px);
+    background: rgba(19, 19, 26, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    position: relative;
+}
+
+.step-number {
+    font-family: var(--font-display);
+    font-size: 4.5rem;
+    font-weight: 200;
+    color: rgba(201, 169, 110, 0.15);
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    line-height: 1;
+}
+
+.step-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.step-body {
+    font-size: var(--body);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.step-visual {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.progress-indicator {
+    position: fixed;
+    bottom: 3rem;
+    left: var(--grid-padding);
+    right: var(--grid-padding);
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--accent-gold);
+    width: 0%;
+}

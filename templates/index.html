@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LexBridge | Where Justice Finds Its Voice</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=IBM+Plex+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cursor.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/nav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/forms.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badge.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/chip.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/hero.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/how-it-works.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/attorneys.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/testimonials.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
+
+    <style>
+        .preloader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preloader-panel {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background: var(--bg-primary);
+        }
+        .preloader-panel.left { left: 0; }
+        .preloader-panel.right { right: 0; background: var(--bg-secondary); }
+        .preloader-content {
+            position: relative;
+            z-index: 1001;
+            text-align: center;
+        }
+        .preloader-wordmark {
+            font-family: var(--font-display);
+            font-size: clamp(4rem, 12vw, 9rem);
+            color: var(--accent-gold);
+            opacity: 0;
+        }
+        .preloader-subtext {
+            font-family: var(--font-sans);
+            letter-spacing: 0.35em;
+            color: rgba(201, 169, 110, 0.7);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Custom Cursor -->
+    <div class="custom-cursor">
+        <span class="cursor-label"></span>
+    </div>
+
+    <!-- Preloader -->
+    <div class="preloader-overlay">
+        <div class="preloader-panel left"></div>
+        <div class="preloader-panel right"></div>
+        <div class="preloader-content">
+            <h1 class="preloader-wordmark">LEX</h1>
+            <p class="preloader-subtext">BRIDGE</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-logo">
+            <img src="{{ url_for('static', filename='assets/icons/scales.svg') }}" alt="LexBridge Scales" style="width: 28px; height: 28px; filter: brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(980%) hue-rotate(345deg) brightness(87%) contrast(85%);">
+            Lex<span class="accent">B</span>ridge
+        </div>
+        <div class="nav-links">
+            <a href="#attorneys" class="nav-link">Find an Attorney</a>
+            <a href="#how_it_works" class="nav-link">How It Works</a>
+            <a href="#testimonials" class="nav-link">Success Stories</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-ghost">Sign In</button>
+            <button class="btn btn-primary nav-cta">Get Legal Help</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero">
+        <div class="hero-background" id="particles-canvas"></div>
+        <div class="container h-full">
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <div class="hero-eyebrow label">Trusted by 50,000+ Clients</div>
+                    <h1 class="hero-title">Your Legal <span class="italic accent-color">Champion</span> Starts Here.</h1>
+                    <p class="hero-body">Expert attorneys across 40+ practice areas. Match in 60 seconds. First consultation free.</p>
+                    
+                    <div class="hero-search-container">
+                        <div class="hero-search">
+                            <input type="text" placeholder="Describe your legal situation...">
+                            <button class="btn btn-primary">Find My Attorney</button>
+                        </div>
+                        <div class="hero-suggestion-chips">
+                            <span class="chip">Divorce</span>
+                            <span class="chip">Car Accident</span>
+                            <span class="chip">Employment</span>
+                            <span class="chip">Real Estate</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <div class="floating-cards-container">
+                        <!-- JS populated cards would go here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Marquee -->
+    <section class="section p-0" style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle);">
+        <div class="overflow-hidden">
+            <div class="animate-marquee py-8">
+                <div class="flex items-center gap-16 px-8">
+                    <span class="label" style="color: rgba(255,255,255,0.2)">Featured in</span>
+                    <span class="display-md" style="opacity: 0.2">Forbes</span>
+                    <span class="display-md" style="opacity: 0.2">The Legal 500</span>
+                    <span class="display-md" style="opacity: 0.2">Super Lawyers</span>
+                    <span class="display-md" style="opacity: 0.2">Avvo</span>
+                    <span class="display-md" style="opacity: 0.2">Law360</span>
+                </div>
+                <div class="flex items-center gap-16 px-8">
+                    <span class="label" style="color: rgba(255,255,255,0.2)">Featured in</span>
+                    <span class="display-md" style="opacity: 0.2">Forbes</span>
+                    <span class="display-md" style="opacity: 0.2">The Legal 500</span>
+                    <span class="display-md" style="opacity: 0.2">Super Lawyers</span>
+                    <span class="display-md" style="opacity: 0.2">Avvo</span>
+                    <span class="display-md" style="opacity: 0.2">Law360</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how_it_works">
+        <div class="horizontal-scroll-wrapper">
+            <div class="step-section">
+                <div class="container grid">
+                    <div class="step-card">
+                        <span class="step-number">01</span>
+                        <h2 class="step-title">Describe Your Situation</h2>
+                        <p class="step-body">Answer a few guided questions in plain English. No legal jargon required. Our AI analyzes your case type, urgency, and jurisdiction.</p>
+                    </div>
+                    <div class="step-visual">
+                        <!-- AI Form Mockup -->
+                    </div>
+                </div>
+            </div>
+            <div class="step-section">
+                <div class="container grid">
+                    <div class="step-card">
+                        <span class="step-number">02</span>
+                        <h2 class="step-title">Get Matched Instantly</h2>
+                        <p class="step-body">Within 60 seconds, receive 3 hand-curated attorney matches based on expertise, availability, and win rate.</p>
+                    </div>
+                    <div class="step-visual">
+                        <!-- Radar Mockup -->
+                    </div>
+                </div>
+            </div>
+            <div class="step-section">
+                <div class="container grid">
+                    <div class="step-card">
+                        <span class="step-number">03</span>
+                        <h2 class="step-title">Free Consultation</h2>
+                        <p class="step-body">Book a complimentary 30-minute consultation. Understand your options with zero obligation.</p>
+                    </div>
+                    <div class="step-visual">
+                        <!-- Calendar Mockup -->
+                    </div>
+                </div>
+            </div>
+            <div class="step-section">
+                <div class="container grid">
+                    <div class="step-card">
+                        <span class="step-number">04</span>
+                        <h2 class="step-title">In Capable Hands</h2>
+                        <p class="step-body">Retain your attorney with transparent billing. Track progress through your secure client portal.</p>
+                    </div>
+                    <div class="step-visual">
+                        <!-- Dashboard Mockup -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="progress-indicator">
+            <div class="progress-fill"></div>
+        </div>
+    </section>
+
+    <!-- Attorney Directory -->
+    <section id="attorneys" class="section">
+        <div class="container">
+            <div class="text-center mb-16">
+                <span class="label accent-color">Featured Attorneys</span>
+                <h2 class="display-lg mt-4">Meet Your Future Counsel</h2>
+            </div>
+            
+            <div class="filter-bar">
+                <button class="chip active">All</button>
+                <button class="chip">Family</button>
+                <button class="chip">Corporate</button>
+                <button class="chip">Criminal</button>
+                <button class="chip">Personal Injury</button>
+            </div>
+
+            <div class="attorney-grid">
+                <!-- Example Card -->
+                <div class="card attorney-card">
+                    <div class="badge-verified"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>
+                    <div class="image-area">
+                        <!-- Placeholder for Sarah Chen -->
+                    </div>
+                    <div class="info-area">
+                        <h3 class="name">Sarah Chen</h3>
+                        <p class="title">Partner, IP & Tech Law</p>
+                        <div class="rating-bar">
+                            <div class="stars">
+                                <svg class="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <svg class="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <svg class="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <svg class="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <svg class="star" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            </div>
+                            <span class="review-count">(312 reviews)</span>
+                        </div>
+                        <div class="mt-4">
+                            <span class="availability-dot available"></span>
+                            <span class="micro">Available Today</span>
+                        </div>
+                    </div>
+                    <div class="hover-panel">
+                        <div class="hover-details">
+                            <p>Win Rate: <span>94%</span></p>
+                            <p>Experience: <span>12 Years</span></p>
+                        </div>
+                        <button class="btn btn-primary w-full mt-auto">Request Consultation</button>
+                    </div>
+                </div>
+
+                <!-- Repeat more cards as needed -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="section py-section">
+        <div class="container">
+            <div class="testimonial-container">
+                <div class="quote-mark">“</div>
+                <h2 class="testimonial-quote">After my accident, I was lost. LexBridge matched me with David in minutes. He won my case in 4 months and I received $2.4M in settlement.</h2>
+                <div class="testimonial-author">
+                    <span class="author-name">Jennifer R.</span>
+                    <span class="author-location">Los Angeles, CA</span>
+                </div>
+                <div class="testimonial-controls">
+                    <button class="testimonial-nav-btn prev-testimonial">←</button>
+                    <button class="testimonial-nav-btn next-testimonial">→</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Panel -->
+    <section class="section" style="background: linear-gradient(135deg, #0F0F14 0%, #13111A 100%);">
+        <div class="container">
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); text-align: center;">
+                <div>
+                    <h2 class="display-lg accent-color">50K+</h2>
+                    <p class="label">Cases Resolved</p>
+                </div>
+                <div>
+                    <h2 class="display-lg accent-color">98%</h2>
+                    <p class="label">Satisfaction Rate</p>
+                </div>
+                <div>
+                    <h2 class="display-lg accent-color">2.8K+</h2>
+                    <p class="label">Verified Lawyers</p>
+                </div>
+                <div>
+                    <h2 class="display-lg accent-color">60s</h2>
+                    <p class="label">Avg. Match Time</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section text-center" style="height: 80vh; display: flex; align-items: center;">
+        <div class="container">
+            <span class="label accent-color">Your Next Step</span>
+            <h2 class="display-lg mt-4 mb-8">Your Rights Deserve<br><span class="italic">Expert Defense.</span></h2>
+            <div class="flex justify-center gap-4">
+                <button class="btn btn-primary btn-lg">Find My Attorney Now</button>
+                <button class="btn btn-ghost btn-lg">How LexBridge Works</button>
+            </div>
+            <p class="micro mt-8" style="opacity: 0.3">Free first consultation • No credit card required</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-logo-area">
+                    <div class="nav-logo">Lex<span class="accent">B</span>ridge</div>
+                    <span class="tagline">Where Justice Finds Its Voice</span>
+                </div>
+                <div class="footer-col">
+                    <h5>Find an Attorney</h5>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">Practice Areas</a>
+                        <a href="#" class="footer-link">Search by State</a>
+                        <a href="#" class="footer-link">Emergency Help</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h5>For Clients</h5>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">How it Works</a>
+                        <a href="#" class="footer-link">Client Portal</a>
+                        <a href="#" class="footer-link">Pricing</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h5>Company</h5>
+                    <div class="footer-links">
+                        <a href="#" class="footer-link">About Us</a>
+                        <a href="#" class="footer-link">Careers</a>
+                        <a href="#" class="footer-link">Contact</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2025 LexBridge Inc. All rights reserved.</span>
+                <div class="flex gap-8">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Match Wizard Modal -->
+    <div class="modal-overlay"></div>
+    <div id="match-modal" class="modal">
+        <div class="modal-header">
+            <h3 class="h3">Match Wizard</h3>
+            <button class="close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="intake-form">
+                <!-- Step 1 -->
+                <div class="form-wizard-step active">
+                    <span class="label accent-color mb-2 d-block">Step 01</span>
+                    <h2 class="h2 mb-8">What's your legal matter?</h2>
+                    <div class="form-group">
+                        <label class="input-label">Full Name</label>
+                        <input type="text" name="name" class="input-control" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Email Address</label>
+                        <input type="email" name="email" class="input-control" placeholder="john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Phone Number</label>
+                        <input type="tel" name="phone" class="input-control" placeholder="+1 (555) 000-0000" required>
+                    </div>
+                    <button type="button" class="btn btn-primary w-full mt-4" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[1].classList.add('active')">Continue</button>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="form-wizard-step">
+                    <span class="label accent-color mb-2 d-block">Step 02</span>
+                    <h2 class="h2 mb-8">Tell us what happened.</h2>
+                    <div class="form-group">
+                        <label class="input-label">Incident Description</label>
+                        <textarea name="description" class="input-control" placeholder="Please describe your situation in plain English..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Location (City, State)</label>
+                        <input type="text" name="location" class="input-control" placeholder="e.g. Austin, TX" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Date of Incident</label>
+                        <input type="date" name="date" class="input-control" required>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="button" class="btn btn-ghost w-full" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[0].classList.add('active')">Back</button>
+                        <button type="button" class="btn btn-primary w-full" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[2].classList.add('active')">Continue</button>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="form-wizard-step">
+                    <span class="label accent-color mb-2 d-block">Step 03</span>
+                    <h2 class="h2 mb-8">Almost there.</h2>
+                    <div class="form-group">
+                        <label class="input-label">Injuries Sustained</label>
+                        <textarea name="injuries" class="input-control" placeholder="Describe any injuries or damages..." required></textarea>
+                    </div>
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="input-label">Police Report Filed?</label>
+                            <select name="police_report" class="input-control">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="input-label">Medical Treatment?</label>
+                            <select name="medical" class="input-control">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mt-4">
+                        <button type="button" class="btn btn-ghost w-full" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[1].classList.add('active')">Back</button>
+                        <button type="submit" class="btn btn-primary w-full">Find My Matches</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/splitting/dist/splitting.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cursor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/particles.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/horizontal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/match-wizard.js') }}"></script>
+
+</body>
+</html>
+gnetic.js') }}"></script>
+
+</body>
+</html>

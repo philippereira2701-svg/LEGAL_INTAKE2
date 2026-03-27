@@ -1,0 +1,25 @@
+.chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.875rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: rgba(240, 237, 232, 0.55);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.chip:hover {
+    background: rgba(201, 169, 110, 0.1);
+    border-color: rgba(201, 169, 110, 0.3);
+    color: var(--accent-gold);
+}
+
+.chip.active {
+    background: var(--accent-gold-dim);
+    border-color: rgba(201, 169, 110, 0.4);
+    color: var(--accent-gold);
+}

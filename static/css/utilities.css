@@ -1,0 +1,21 @@
+.m-0 { margin: 0; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-8 { margin-top: 2rem; }
+
+.p-0 { padding: 0; }
+.py-section { padding-top: var(--section-v); padding-bottom: var(--section-v); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+.z-10 { z-index: 10; }
+.z-20 { z-index: 20; }
+
+.overflow-hidden { overflow: hidden; }
+
+.pointer-events-none { pointer-events: none; }

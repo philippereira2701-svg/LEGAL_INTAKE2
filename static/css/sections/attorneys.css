@@ -1,0 +1,59 @@
+#attorneys {
+    background: var(--bg-primary);
+}
+
+.filter-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 4rem;
+    flex-wrap: wrap;
+}
+
+.attorney-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.attorney-card-inner {
+    position: relative;
+    height: 100%;
+}
+
+.hover-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: rgba(9, 9, 12, 0.97);
+    backdrop-filter: blur(20px);
+    overflow: hidden;
+    transition: height var(--trans-normal);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.5rem;
+    z-index: 5;
+}
+
+.attorney-card:hover .hover-panel {
+    height: 60%;
+    padding: 1.5rem;
+}
+
+.hover-details {
+    margin-bottom: 1.5rem;
+}
+
+.hover-details p {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.hover-details span {
+    font-weight: 500;
+    color: var(--text-primary);
+}

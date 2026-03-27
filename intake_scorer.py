@@ -22,49 +22,53 @@ class IntakeScoringResult(BaseModel):
     tier: Literal["BOOK NOW", "ATTORNEY REVIEW", "BORDERLINE", "LIKELY DECLINE", "REJECT"]
     recommended_action: Literal["AUTO_BOOK", "SOFT_REJECT", "MANUAL_REVIEW"]
 
+from logger import logger
+
 class IntakeScorer:
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.client = genai.Client(api_key=self.api_key) if self.api_key else None
-        # Try these models in order
-        self.models = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"]
+        self.models = ["gemini-1.5-flash", "gemini-2.0-flash"]
 
     def _get_heuristic_score(self, data: str) -> IntakeScoringResult:
-        """Fail-safe: Basic keyword-based triage if AI is unavailable."""
+        """Fail-safe: Basic keyword-based triage."""
+        logger.warning("AI OFFLINE: Initializing Heuristic Fallback Engine.")
         data_lower = data.lower()
-        score = 5 # Default
+        score = 5 
         flags = []
         
-        # Heuristic detection
-        if any(w in data_lower for w in ["hospital", "surgery", "broken", "fracture", "icu", "death"]):
-            score += 3
-        if any(w in data_lower for w in ["drunk", "dui", "rear-ended", "red light"]):
-            score += 2
-        if "lawyer" in data_lower or "attorney" in data_lower:
-            flags.append("Already represented?")
+        if any(w in data_lower for w in ["hospital", "surgery", "broken", "fracture", "death"]): score += 3
+        if any(w in data_lower for w in ["drunk", "dui", "rear-ended"]): score += 2
+        if "lawyer" in data_lower: flags.append("Potential dual representation")
             
-        score = min(score, 10)
-        
         return IntakeScoringResult(
-            lead_score=score,
-            liability=ScoringPillar(score=score, reasoning="Heuristic Analysis (AI Fallback)"),
-            damages=ScoringPillar(score=score, reasoning="Heuristic Analysis (AI Fallback)"),
-            statute_of_limitations=ScoringPillar(score=10, reasoning="Recent event assumed"),
-            summary="[AI OFFLINE] Heuristic scan performed. High-priority keywords detected.",
+            lead_score=min(score, 10),
+            liability=ScoringPillar(score=score, reasoning="Heuristic Scan"),
+            damages=ScoringPillar(score=score, reasoning="Heuristic Scan"),
+            statute_of_limitations=ScoringPillar(score=10, reasoning="Recent"),
+            summary="[HEURISTIC] Automated keyword-based triage completed.",
             red_flags=flags,
-            tier="BOOK NOW" if score >= 8 else "ATTORNEY REVIEW",
-            recommended_action="AUTO_BOOK" if score >= 8 else "MANUAL_REVIEW"
+            tier="ATTORNEY REVIEW",
+            recommended_action="MANUAL_REVIEW"
         )
 
     def score_lead(self, lead_data: str) -> IntakeScoringResult:
         if not self.client:
             return self._get_heuristic_score(lead_data)
 
-        prompt = f"Triage this legal lead for a Personal Injury firm. Return JSON only.\n\nDATA:\n{lead_data}"
+        system_instruction = (
+            "You are a Senior Personal Injury Intake Specialist. Analyze the provided lead data "
+            "rigorously for three pillars: 1. Liability (who is at fault?), 2. Damages (severity of injury/loss), "
+            "and 3. Statute of Limitations (jurisdictional deadlines). "
+            "Identify red flags such as: already represented, user at fault, no injury, or old incident. "
+            "Return structured JSON matching the provided schema."
+        )
+
+        prompt = f"{system_instruction}\n\nCLIENT DATA:\n{lead_data}"
         
-        # Try multiple models to bypass quota/404 issues
         for model_id in self.models:
             try:
+                logger.info(f"AI INFERENCE | Model:{model_id} | Attempting Triage")
                 response = self.client.models.generate_content(
                     model=model_id,
                     contents=prompt,
@@ -73,11 +77,11 @@ class IntakeScorer:
                         'response_schema': IntakeScoringResult,
                     }
                 )
-                return IntakeScoringResult.model_validate_json(response.text)
+                result = IntakeScoringResult.model_validate_json(response.text)
+                logger.info(f"AI SUCCESS | Score:{result.lead_score} | Tier:{result.tier}")
+                return result
             except Exception as e:
-                print(f"Model {model_id} failed: {e}")
-                continue # Try next model
+                logger.error(f"AI FAILURE | Model:{model_id} | Error:{str(e)}")
+                continue
         
-        # If all AI models fail, use the Heuristic Engine
-        print("All AI models exhausted. Falling back to Heuristic Engine.")
         return self._get_heuristic_score(lead_data)

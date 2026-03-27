@@ -1,0 +1,46 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--micro);
+    font-weight: 500;
+    letter-spacing: var(--ls-caps);
+    text-transform: uppercase;
+}
+
+.badge-success {
+    background: rgba(61, 153, 112, 0.12);
+    border: 1px solid rgba(61, 153, 112, 0.25);
+    color: var(--success);
+}
+
+.badge-warning {
+    background: rgba(227, 168, 87, 0.12);
+    border: 1px solid rgba(227, 168, 87, 0.25);
+    color: var(--warning);
+}
+
+.badge-gold {
+    background: var(--accent-gold-dim);
+    border: 1px solid rgba(201, 169, 110, 0.3);
+    color: var(--accent-gold);
+}
+
+.availability-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.availability-dot.available {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+.availability-dot.soon {
+    background: var(--warning);
+}
