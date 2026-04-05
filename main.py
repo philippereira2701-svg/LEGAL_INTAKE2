@@ -13,10 +13,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "lex_bridge_ultra_secret_2025")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "legal_prj_ultra_secret_2025")
 
 # Architecture Singleton Initialization
 db = DatabaseManager()
+db.seed_data()
 scorer = IntakeScorer()
 router = ActionRouter()
 notifier = LawyerNotifier()
@@ -27,7 +28,6 @@ ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "lex_admin_secure_key_99")
 def require_auth(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Allow browser access to /admin if they have the key in query or header
         key = request.headers.get('X-API-KEY') or request.args.get('key')
         if key != ADMIN_API_KEY:
             logger.warning(f"UNAUTHORIZED ACCESS | IP:{request.remote_addr} | Path:{request.path}")
@@ -103,7 +103,7 @@ def process_intake():
 
         logger.audit_lead(lead_id, "Inscribed to Database")
 
-        # Prep for Async Actions (Simulated)
+        # Prep for Async Actions
         lead_dict = {
             "id": lead_id,
             "client_name": data.get('name'),
@@ -134,5 +134,5 @@ def process_intake():
         return jsonify({"status": "error", "message": "Internal processing failure"}), 500
 
 if __name__ == "__main__":
-    logger.info("LEXBRIDGE CORE STARTING | Port:5000")
+    logger.info("LEGAL_PRJ CORE STARTING | Port:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)

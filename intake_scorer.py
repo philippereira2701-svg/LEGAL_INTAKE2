@@ -5,24 +5,23 @@ from pydantic import BaseModel, Field
 from typing import List, Literal
 from google import genai
 from dotenv import load_dotenv
+from logger import logger
 
 load_dotenv()
 
 class ScoringPillar(BaseModel):
-    score: int = Field(..., description="Score from 0 to 10")
-    reasoning: str = Field(..., description="Brief explanation")
+    score: int = Field(ge=0, le=10)
+    reasoning: str
 
 class IntakeScoringResult(BaseModel):
-    lead_score: int
+    lead_score: int = Field(ge=0, le=10)
     liability: ScoringPillar
     damages: ScoringPillar
     statute_of_limitations: ScoringPillar
     summary: str
     red_flags: List[str]
-    tier: Literal["BOOK NOW", "ATTORNEY REVIEW", "BORDERLINE", "LIKELY DECLINE", "REJECT"]
-    recommended_action: Literal["AUTO_BOOK", "SOFT_REJECT", "MANUAL_REVIEW"]
-
-from logger import logger
+    tier: Literal["BOOK NOW", "ATTORNEY REVIEW", "BORDERLINE", "DECLINE"]
+    recommended_action: Literal["AUTO_BOOK", "MANUAL_REVIEW", "SEND_REJECTION"]
 
 class IntakeScorer:
     def __init__(self):
@@ -57,7 +56,7 @@ class IntakeScorer:
             return self._get_heuristic_score(lead_data)
 
         system_instruction = (
-            "You are a Senior Personal Injury Intake Specialist. Analyze the provided lead data "
+            "You are a Senior Personal Injury Intake Specialist for LEGAL_PRJ. Analyze the provided lead data "
             "rigorously for three pillars: 1. Liability (who is at fault?), 2. Damages (severity of injury/loss), "
             "and 3. Statute of Limitations (jurisdictional deadlines). "
             "Identify red flags such as: already represented, user at fault, no injury, or old incident. "

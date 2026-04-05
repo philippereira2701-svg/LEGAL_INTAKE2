@@ -4,10 +4,10 @@ from datetime import datetime
 
 class LexLogger:
     """
-    Centralized high-fidelity logging for LexBridge Architecture.
+    Centralized high-fidelity logging for LEGAL_PRJ Architecture.
     """
-    def __init__(self, log_file="lexbridge_core.log"):
-        self.logger = logging.getLogger("LexBridge")
+    def __init__(self, log_file="legal_prj_core.log"):
+        self.logger = logging.getLogger("LEGAL_PRJ")
         self.logger.setLevel(logging.INFO)
         
         # Create handlers

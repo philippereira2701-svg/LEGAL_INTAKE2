@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexBridge | Where Justice Finds Its Voice</title>
+    <title>LEGAL_PRJ | Elite Legal Marketplace</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sections/footer.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/atmospherics.css') }}">
 
     <style>
         .preloader-overlay {
@@ -73,6 +74,13 @@
 </head>
 <body>
 
+    <!-- Atmospheric Elements -->
+    <div class="noise-overlay"></div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
     <!-- Custom Cursor -->
     <div class="custom-cursor">
         <span class="cursor-label"></span>
@@ -83,16 +91,16 @@
         <div class="preloader-panel left"></div>
         <div class="preloader-panel right"></div>
         <div class="preloader-content">
-            <h1 class="preloader-wordmark">LEX</h1>
-            <p class="preloader-subtext">BRIDGE</p>
+            <h1 class="preloader-wordmark">LEGAL</h1>
+            <p class="preloader-subtext">PRJ</p>
         </div>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-logo">
-            <img src="{{ url_for('static', filename='assets/icons/scales.svg') }}" alt="LexBridge Scales" style="width: 28px; height: 28px; filter: brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(980%) hue-rotate(345deg) brightness(87%) contrast(85%);">
-            Lex<span class="accent">B</span>ridge
+            <img src="{{ url_for('static', filename='assets/icons/scales.svg') }}" alt="LEGAL_PRJ Scales" style="width: 28px; height: 28px; filter: brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(980%) hue-rotate(345deg) brightness(87%) contrast(85%);">
+            LEGAL_<span class="accent">PRJ</span>
         </div>
         <div class="nav-links">
             <a href="#attorneys" class="nav-link">Find an Attorney</a>
@@ -111,11 +119,15 @@
         <div class="container h-full">
             <div class="hero-grid">
                 <div class="hero-content">
-                    <div class="hero-eyebrow label">Trusted by 50,000+ Clients</div>
-                    <h1 class="hero-title">Your Legal <span class="italic accent-color">Champion</span> Starts Here.</h1>
-                    <p class="hero-body">Expert attorneys across 40+ practice areas. Match in 60 seconds. First consultation free.</p>
+                    <div class="hero-eyebrow label reveal-text">Elite Legal Representation</div>
+                    <h1 class="hero-title reveal-text">
+                        <span class="reveal-text-line"><span>Justice,</span></span>
+                        <span class="reveal-text-line"><span>Refined for the</span></span>
+                        <span class="reveal-text-line"><span class="italic accent-color">Modern Era.</span></span>
+                    </h1>
+                    <p class="hero-body reveal-text">Connect with top-tier counsel in under 60 seconds. A bespoke matching experience for high-stakes litigation.</p>
                     
-                    <div class="hero-search-container">
+                    <div class="hero-search-container reveal-text">
                         <div class="hero-search">
                             <input type="text" placeholder="Describe your legal situation...">
                             <button class="btn btn-primary">Find My Attorney</button>
@@ -130,7 +142,21 @@
                 </div>
                 <div class="hero-right">
                     <div class="floating-cards-container">
-                        <!-- JS populated cards would go here -->
+                        <div class="premium-3d-card card-1 glass-card">
+                            <div class="badge badge-gold">FAMILY LAW</div>
+                            <h4 class="mt-4">Sarah Chen</h4>
+                            <p class="micro opacity-50">Partner, IP & Tech</p>
+                        </div>
+                        <div class="premium-3d-card card-2 glass-card featured">
+                            <div class="badge badge-gold">CORPORATE</div>
+                            <h4 class="mt-4">Marcus Williams</h4>
+                            <p class="micro opacity-50">Senior Counsel</p>
+                        </div>
+                        <div class="premium-3d-card card-3 glass-card">
+                            <div class="badge badge-gold">CRIMINAL</div>
+                            <h4 class="mt-4">Priya Kapoor</h4>
+                            <p class="micro opacity-50">Managing Partner</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,9 +197,7 @@
                         <h2 class="step-title">Describe Your Situation</h2>
                         <p class="step-body">Answer a few guided questions in plain English. No legal jargon required. Our AI analyzes your case type, urgency, and jurisdiction.</p>
                     </div>
-                    <div class="step-visual">
-                        <!-- AI Form Mockup -->
-                    </div>
+                    <div class="step-visual"></div>
                 </div>
             </div>
             <div class="step-section">
@@ -181,11 +205,9 @@
                     <div class="step-card">
                         <span class="step-number">02</span>
                         <h2 class="step-title">Get Matched Instantly</h2>
-                        <p class="step-body">Within 60 seconds, receive 3 hand-curated attorney matches based on expertise, availability, and win rate.</p>
+                        <p class="step-body">Within 60 seconds, receive hand-curated attorney matches based on expertise, availability, and win rate.</p>
                     </div>
-                    <div class="step-visual">
-                        <!-- Radar Mockup -->
-                    </div>
+                    <div class="step-visual"></div>
                 </div>
             </div>
             <div class="step-section">
@@ -193,11 +215,9 @@
                     <div class="step-card">
                         <span class="step-number">03</span>
                         <h2 class="step-title">Free Consultation</h2>
-                        <p class="step-body">Book a complimentary 30-minute consultation. Understand your options with zero obligation.</p>
+                        <p class="step-body">Book a complimentary consultation. Understand your options with zero obligation.</p>
                     </div>
-                    <div class="step-visual">
-                        <!-- Calendar Mockup -->
-                    </div>
+                    <div class="step-visual"></div>
                 </div>
             </div>
             <div class="step-section">
@@ -207,9 +227,7 @@
                         <h2 class="step-title">In Capable Hands</h2>
                         <p class="step-body">Retain your attorney with transparent billing. Track progress through your secure client portal.</p>
                     </div>
-                    <div class="step-visual">
-                        <!-- Dashboard Mockup -->
-                    </div>
+                    <div class="step-visual"></div>
                 </div>
             </div>
         </div>
@@ -235,12 +253,9 @@
             </div>
 
             <div class="attorney-grid">
-                <!-- Example Card -->
                 <div class="card attorney-card">
                     <div class="badge-verified"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg></div>
-                    <div class="image-area">
-                        <!-- Placeholder for Sarah Chen -->
-                    </div>
+                    <div class="image-area"></div>
                     <div class="info-area">
                         <h3 class="name">Sarah Chen</h3>
                         <p class="title">Partner, IP & Tech Law</p>
@@ -267,8 +282,6 @@
                         <button class="btn btn-primary w-full mt-auto">Request Consultation</button>
                     </div>
                 </div>
-
-                <!-- Repeat more cards as needed -->
             </div>
         </div>
     </section>
@@ -278,7 +291,7 @@
         <div class="container">
             <div class="testimonial-container">
                 <div class="quote-mark">“</div>
-                <h2 class="testimonial-quote">After my accident, I was lost. LexBridge matched me with David in minutes. He won my case in 4 months and I received $2.4M in settlement.</h2>
+                <h2 class="testimonial-quote">After my accident, I was lost. LEGAL_PRJ matched me with David in minutes. He won my case in 4 months and I received $2.4M in settlement.</h2>
                 <div class="testimonial-author">
                     <span class="author-name">Jennifer R.</span>
                     <span class="author-location">Los Angeles, CA</span>
@@ -322,7 +335,7 @@
             <h2 class="display-lg mt-4 mb-8">Your Rights Deserve<br><span class="italic">Expert Defense.</span></h2>
             <div class="flex justify-center gap-4">
                 <button class="btn btn-primary btn-lg">Find My Attorney Now</button>
-                <button class="btn btn-ghost btn-lg">How LexBridge Works</button>
+                <button class="btn btn-ghost btn-lg">How LEGAL_PRJ Works</button>
             </div>
             <p class="micro mt-8" style="opacity: 0.3">Free first consultation • No credit card required</p>
         </div>
@@ -333,7 +346,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-logo-area">
-                    <div class="nav-logo">Lex<span class="accent">B</span>ridge</div>
+                    <div class="nav-logo">LEGAL_<span class="accent">PRJ</span></div>
                     <span class="tagline">Where Justice Finds Its Voice</span>
                 </div>
                 <div class="footer-col">
@@ -362,7 +375,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <span>© 2025 LexBridge Inc. All rights reserved.</span>
+                <span>© 2025 LEGAL_PRJ Inc. All rights reserved.</span>
                 <div class="flex gap-8">
                     <a href="#">Privacy Policy</a>
                     <a href="#">Terms of Service</a>
@@ -380,7 +393,6 @@
         </div>
         <div class="modal-body">
             <form id="intake-form">
-                <!-- Step 1 -->
                 <div class="form-wizard-step active">
                     <span class="label accent-color mb-2 d-block">Step 01</span>
                     <h2 class="h2 mb-8">What's your legal matter?</h2>
@@ -398,14 +410,12 @@
                     </div>
                     <button type="button" class="btn btn-primary w-full mt-4" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[1].classList.add('active')">Continue</button>
                 </div>
-
-                <!-- Step 2 -->
                 <div class="form-wizard-step">
                     <span class="label accent-color mb-2 d-block">Step 02</span>
                     <h2 class="h2 mb-8">Tell us what happened.</h2>
                     <div class="form-group">
                         <label class="input-label">Incident Description</label>
-                        <textarea name="description" class="input-control" placeholder="Please describe your situation in plain English..." required></textarea>
+                        <textarea name="description" class="input-control" placeholder="Please describe your situation..." required></textarea>
                     </div>
                     <div class="form-group">
                         <label class="input-label">Location (City, State)</label>
@@ -420,18 +430,16 @@
                         <button type="button" class="btn btn-primary w-full" onclick="document.querySelector('.form-wizard-step.active').classList.remove('active'); document.querySelectorAll('.form-wizard-step')[2].classList.add('active')">Continue</button>
                     </div>
                 </div>
-
-                <!-- Step 3 -->
                 <div class="form-wizard-step">
                     <span class="label accent-color mb-2 d-block">Step 03</span>
                     <h2 class="h2 mb-8">Almost there.</h2>
                     <div class="form-group">
                         <label class="input-label">Injuries Sustained</label>
-                        <textarea name="injuries" class="input-control" placeholder="Describe any injuries or damages..." required></textarea>
+                        <textarea name="injuries" class="input-control" placeholder="Describe any injuries..." required></textarea>
                     </div>
                     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
-                            <label class="input-label">Police Report Filed?</label>
+                            <label class="input-label">Police Report?</label>
                             <select name="police_report" class="input-control">
                                 <option value="no">No</option>
                                 <option value="yes">Yes</option>
@@ -470,10 +478,7 @@
     <script src="{{ url_for('static', filename='js/horizontal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/carousel.js') }}"></script>
     <script src="{{ url_for('static', filename='js/match-wizard.js') }}"></script>
-
-</body>
-</html>
-gnetic.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/magnetic.js') }}"></script>
 
 </body>
 </html>

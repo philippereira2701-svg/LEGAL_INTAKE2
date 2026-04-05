@@ -1,166 +1,156 @@
 import os
+import uuid
+import logging
+import time
 import json
-from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Index, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from datetime import datetime, timezone
+from typing import List, Optional, Dict, Any
+from functools import wraps
+from dotenv import load_dotenv
+from sqlalchemy import (
+    Column, String, Integer, Boolean, Text, ForeignKey, 
+    DateTime, Index, CheckConstraint, create_engine, text, func
+)
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
+from sqlalchemy.exc import OperationalError
+
+# Load environment variables from .env
+load_dotenv()
+
+# Production-grade Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("DB_MANAGER")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# --- AUTO-FALLBACK FOR TESTING ---
+if not DATABASE_URL or "user:password@localhost" in DATABASE_URL:
+    DATABASE_URL = "sqlite:///./test_legal_intake.db"
+    logger.warning("PostgreSQL not configured. Falling back to SQLite for local testing: test_legal_intake.db")
 
 Base = declarative_base()
 
-class Lead(Base):
-    """
-    Lead model representing a potential client intake with technical specifications.
-    """
-    __tablename__ = 'leads'
+# --- Models ---
 
+class Tenant(Base):
+    """Law firm multi-tenant record"""
+    __tablename__ = 'tenants'
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    firm_name = Column(String(200), nullable=False)
+    firm_slug = Column(String(100), unique=True, nullable=False)
+    lawyer_phone = Column(String(20))
+    lawyer_email = Column(String(100))
+    is_active = Column(Boolean, default=True)
+
+class Lead(Base):
+    """Core intake record"""
+    __tablename__ = 'leads'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    tenant_id = Column(String(36), ForeignKey('tenants.id', ondelete='CASCADE'), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     client_name = Column(String(100), nullable=False)
     client_phone = Column(String(20))
     client_email = Column(String(100))
-    
-    # Technical Specs
     incident_description = Column(Text)
     incident_location = Column(String(200))
-    injuries_sustained = Column(String(200))
-    insurance_info = Column(String(200))
-    
+    incident_date = Column(String(100))
+    injuries_sustained = Column(Text)
     police_report_filed = Column(Boolean, default=False)
     medical_treatment_received = Column(Boolean, default=False)
-    incident_date = Column(String(50))
-    
-    # AI Analysis
     ai_score = Column(Integer)
     ai_tier = Column(String(30))
     ai_summary = Column(Text)
     liability_score = Column(Integer)
     damages_score = Column(Integer)
     sol_score = Column(Integer)
-    red_flags = Column(Text)  # JSON string
-    
-    # Action Workflow
+    red_flags = Column(Text, default="[]") # JSON string for SQLite
     recommended_action = Column(String(30))
-    action_taken = Column(String(30), default='pending')
-    action_taken_at = Column(DateTime)
-    lawyer_notified = Column(Boolean, default=False)
-    lawyer_notified_at = Column(DateTime)
-    status = Column(String(20), default='pending')
+    status = Column(String(30), default='pending')
+    action_taken = Column(String(100), default="None")
 
-    __table_args__ = (
-        Index('idx_ai_score', 'ai_score'),
-        Index('idx_created_at', 'created_at'),
-    )
+# --- Database Management ---
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class DatabaseManager:
-    def __init__(self, db_path='legal_intake.db'):
-        self.db_path = db_path
-        self.engine = create_engine(f'sqlite:///{db_path}')
-        try:
-            # Check if schema is valid
-            self.Session = sessionmaker(bind=self.engine)
-            session = self.Session()
-            session.query(Lead).first()
-            session.close()
-        except Exception:
-            # Schema mismatch or no table - recreate everything
-            print("Database schema mismatch detected. Recreating database...")
-            if os.path.exists(db_path):
-                os.remove(db_path)
-            Base.metadata.create_all(self.engine)
-            self.Session = sessionmaker(bind=self.engine)
-        
-        Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker(bind=self.engine)
+    """Enhanced database controller with standalone support."""
+    
+    def __init__(self, session: Optional[Session] = None):
+        self._provided_session = session
+        Base.metadata.create_all(bind=engine)
 
-    def insert_lead(self, data: dict) -> int:
-        session = self.Session()
-        try:
-            new_lead = Lead(**data)
-            session.add(new_lead)
-            session.commit()
-            return new_lead.id
-        except Exception as e:
-            session.rollback()
-            raise e
-        finally:
-            session.close()
-
-    def update_lead_action(self, lead_id: int, action: str, lawyer_notified: bool = False):
-        session = self.Session()
-        try:
-            lead = session.query(Lead).get(lead_id)
-            if lead:
-                lead.action_taken = action
-                lead.action_taken_at = datetime.utcnow()
-                if lawyer_notified:
-                    lead.lawyer_notified = True
-                    lead.lawyer_notified_at = datetime.utcnow()
-                session.commit()
-        finally:
-            session.close()
-
-    def get_all_leads(self):
-        session = self.Session()
-        leads = session.query(Lead).order_by(Lead.created_at.desc()).all()
-        session.close()
-        return leads
-
-    def get_dashboard_stats(self):
-        session = self.Session()
-        try:
-            total_leads = session.query(func.count(Lead.id)).scalar() or 0
-            avg_score = session.query(func.avg(Lead.ai_score)).scalar() or 0
-            book_now_count = session.query(func.count(Lead.id)).filter(Lead.ai_tier == 'BOOK NOW').scalar() or 0
-            
-            conversion_rate = (book_now_count / total_leads * 100) if total_leads > 0 else 0
-            
-            return {
-                "total_leads": total_leads,
-                "avg_score": round(avg_score, 1) if avg_score else 0.0,
-                "book_now_count": book_now_count,
-                "conversion_rate": round(conversion_rate, 1)
-            }
-        finally:
-            session.close()
+    def get_session(self):
+        if self._provided_session:
+            return self._provided_session
+        return SessionLocal()
 
     def seed_data(self):
-        session = self.Session()
-        if session.query(Lead).count() > 0:
-            session.close()
-            return
+        """Initializes default tenant for LEGAL_PRJ."""
+        session = self.get_session()
+        try:
+            if not session.query(Tenant).filter_by(firm_slug="default").first():
+                default_tenant = Tenant(
+                    id="default-tenant-id",
+                    firm_name="LEGAL_PRJ Global",
+                    firm_slug="default",
+                    lawyer_email="admin@legalprj.com"
+                )
+                session.add(default_tenant)
+                session.commit()
+                logger.info("SEED | Default Tenant Created")
+        finally:
+            if not self._provided_session: session.close()
 
-        samples = [
-            {
-                "client_name": "Michael Harrison",
-                "client_phone": "310-555-0102",
-                "client_email": "m.harrison@example.com",
-                "incident_description": "Rear-ended by a commercial vehicle at high speed.",
-                "incident_location": "I-405 South, Los Angeles",
-                "injuries_sustained": "Cervical spine fracture, concussion",
-                "insurance_info": "State Farm (Policy #99283)",
-                "police_report_filed": True,
-                "medical_treatment_received": True,
-                "incident_date": "2024-03-20",
-                "ai_score": 9,
-                "ai_tier": "BOOK NOW",
-                "ai_summary": "High-value commercial vehicle liability with catastrophic injury profile.",
-                "liability_score": 10, "damages_score": 9, "sol_score": 10,
-                "red_flags": json.dumps([]),
-                "recommended_action": "AUTO_BOOK",
-                "status": "completed",
-                "action_taken": "Automated Booking Sent"
+    def insert_lead(self, lead_data: Dict[str, Any]) -> int:
+        session = self.get_session()
+        try:
+            # Ensure we have a tenant
+            tenant = session.query(Tenant).first()
+            tid = tenant.id if tenant else None
+            
+            lead = Lead(tenant_id=tid, **lead_data)
+            session.add(lead)
+            session.commit()
+            session.refresh(lead)
+            return lead.id
+        finally:
+            if not self._provided_session: session.close()
+
+    def get_dashboard_stats(self) -> Dict[str, Any]:
+        session = self.get_session()
+        try:
+            total = session.query(func.count(Lead.id)).scalar() or 0
+            avg_score = session.query(func.avg(Lead.ai_score)).scalar() or 0
+            booked = session.query(func.count(Lead.id)).filter(Lead.ai_tier == 'BOOK NOW').scalar() or 0
+            
+            return {
+                "total_leads": total,
+                "avg_score": round(float(avg_score), 1),
+                "book_now_count": booked,
+                "conversion_rate": round((booked / total * 100), 1) if total > 0 else 0
             }
-        ]
+        finally:
+            if not self._provided_session: session.close()
 
-        for s in samples:
-            session.add(Lead(**s))
-        session.commit()
-        session.close()
+    def get_all_leads(self) -> List[Lead]:
+        session = self.get_session()
+        try:
+            return session.query(Lead).order_by(Lead.created_at.desc()).all()
+        finally:
+            if not self._provided_session: session.close()
 
-if __name__ == "__main__":
-    # Clean restart of DB for new schema (Commented out to keep DB truncated)
-    # if os.path.exists('legal_intake.db'):
-    #     os.remove('legal_intake.db')
-    db = DatabaseManager()
-    # db.seed_data()
-    print("Database Architecture Ready.")
+    def update_lead_action(self, lead_id: int, action: str):
+        session = self.get_session()
+        try:
+            lead = session.query(Lead).filter(Lead.id == lead_id).first()
+            if lead:
+                lead.action_taken = action
+                session.commit()
+        finally:
+            if not self._provided_session: session.close()

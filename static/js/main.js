@@ -73,5 +73,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    console.log('LexBridge Core & Motion Initialized');
+    console.log('LEGAL_PRJ Core & Motion Initialized');
 });

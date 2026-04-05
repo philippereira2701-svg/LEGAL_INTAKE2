@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LexBridge | Admin Command Center</title>
+    <title>LEGAL_PRJ | Admin Command Center</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,7 +96,7 @@
             <button class="close-modal" onclick="closeShare()">✕</button>
         </div>
         <div class="modal-body text-center">
-            <p class="body-lg text-secondary mb-8">Direct clients to the premium LexBridge intake form.</p>
+            <p class="body-lg text-secondary mb-8">Direct clients to the premium LEGAL_PRJ intake form.</p>
             <div id="qrcode"></div>
             <div style="background: rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-top: 1rem;">
                 <span class="label" style="display: block; margin-bottom: 0.5rem; opacity: 0.5;">Secure Portal URL</span>
@@ -115,7 +115,7 @@
             try {
                 const res = await fetch(url);
                 if (res.status === 401) {
-                    alert("Unauthorized. LexBridge Access Key Required.");
+                    alert("Unauthorized. LEGAL_PRJ Access Key Required.");
                     window.location.href = '/';
                     return null;
                 }

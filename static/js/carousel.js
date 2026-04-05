@@ -8,17 +8,17 @@ class TestimonialCarousel {
         
         this.testimonials = [
             {
-                quote: "After my accident, I was lost. LexBridge matched me with David in minutes. He won my case in 4 months and I received $2.4M in settlement.",
+                quote: "After my accident, I was lost. LEGAL_PRJ matched me with David in minutes. He won my case in 4 months and I received $2.4M in settlement.",
                 author: "Jennifer R.",
                 location: "Los Angeles, CA"
             },
             {
-                quote: "The custody battle was terrifying. Sarah Chen guided us through every step. My children are now safe, and I can't imagine going through this without LexBridge.",
+                quote: "The custody battle was terrifying. Sarah Chen guided us through every step. My children are now safe, and I can't imagine going through this without LEGAL_PRJ.",
                 author: "Michael T.",
                 location: "Austin, TX"
             },
             {
-                quote: "As a first-generation immigrant, navigating the legal system felt impossible. LexBridge connected me with an attorney who changed everything.",
+                quote: "As a first-generation immigrant, navigating the legal system felt impossible. LEGAL_PRJ connected me with an attorney who changed everything.",
                 author: "Ana M.",
                 location: "Miami, FL"
             }
