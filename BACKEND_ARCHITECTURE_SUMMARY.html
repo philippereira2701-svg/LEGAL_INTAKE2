@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>BACKEND_ARCHITECTURE_SUMMARY</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+<style>@page{size:Letter;margin:0.3in;}body{font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.15;color:#111;}h1{font-size:17px;margin:0 0 8px;}h2{font-size:13px;margin:10px 0 5px;}h3{font-size:11px;margin:8px 0 4px;}p,li{margin:0 0 4px;}ul{margin:0 0 5px 16px;}code{font-size:9px;}</style></head>
+<body>
+<h1
+id="legal_intake2-backend-and-api-architecture-summary">LEGAL_INTAKE2
+Backend and API Architecture Summary</h1>
+<h2 id="project-purpose-and-core-idea">1) Project Purpose and Core
+Idea</h2>
+<p>This project is an AI-assisted legal intake platform for personal
+injury law firms. The system collects client incident details, triages
+case quality, stores lead records, and triggers follow-up actions such
+as attorney notifications and client communications.</p>
+<p>At a high level, the product solves three operational pain
+points:</p>
+<ul>
+<li>Fast intake capture from prospective clients.</li>
+<li>Consistent lead qualification using deterministic rules plus AI
+scoring.</li>
+<li>Immediate operational response (dashboarding, messaging, and routing
+decisions).</li>
+</ul>
+<p>The codebase currently contains two backend patterns:</p>
+<ul>
+<li>A legacy monolithic flow centered around <code>main.py</code>.</li>
+<li>A newer multi-tenant architecture centered around
+<code>app.py</code>, <code>api.py</code>, and
+<code>workers.py</code>.</li>
+</ul>
+<p>Because both are present, understanding “how the backend works”
+requires seeing how each layer is intended to function and where there
+are integration gaps.</p>
+<h2 id="high-level-architecture">2) High-Level Architecture</h2>
+<p>The backend stack is Python/Flask with SQLAlchemy, Celery, Redis, and
+Gemini AI.</p>
+<p>Primary components:</p>
+<ul>
+<li>Web framework: Flask (<code>app.py</code> application factory and
+routes).</li>
+<li>API layer: Flask Blueprint in <code>api.py</code> under
+<code>/api/*</code>.</li>
+<li>Auth layer: JWT + bcrypt in <code>auth.py</code>.</li>
+<li>Data layer: SQLAlchemy models/session in
+<code>database.py</code>.</li>
+<li>Async processing: Celery tasks in <code>workers.py</code>.</li>
+<li>AI scoring: Gemini + Pydantic schema validation
+(<code>intake_scorer.py</code> and <code>workers.py</code>).</li>
+<li>Deterministic pre-AI gate: <code>rule_engine.py</code>.</li>
+<li>Notification channels: Twilio SMS and SMTP/Gmail email.</li>
+<li>Optional analytics offload client:
+<code>dungbeetle_client.py</code>.</li>
+<li>Migration baseline: Alembic revision in
+<code>migrations/versions/001_initial.py</code>.</li>
+</ul>
+<p>Operationally, there are two execution paths:</p>
+<ol type="1">
+<li><strong>Legacy synchronous path (<code>main.py</code>)</strong>
+<ul>
+<li>Intake POST to <code>/intake</code>.</li>
+<li>Immediate scoring and DB insert in request cycle.</li>
+<li>Router + notifier triggered directly.</li>
+</ul></li>
+<li><strong>Current asynchronous path (<code>app.py</code> +
+<code>api.py</code> + <code>workers.py</code>)</strong>
+<ul>
+<li>Public intake POST to
+<code>/api/intake/&lt;firm_slug&gt;</code>.</li>
+<li>Request validated and enqueued via Celery.</li>
+<li>Worker applies rules, AI scoring, persistence, and notifications
+asynchronously.</li>
+</ul></li>
+</ol>
+<p>The second path is the intended production architecture because it is
+multi-tenant and more scalable.</p>
+<h2 id="request-lifecycle-how-the-new-backend-flow-works">3) Request
+Lifecycle: How the New Backend Flow Works</h2>
+<h3 id="app-bootstrap">3.1 App bootstrap</h3>
+<p><code>app.py</code> uses an application factory
+(<code>create_app</code>) and performs:</p>
+<ul>
+<li>Environment validation (<code>DATABASE_URL</code>,
+<code>REDIS_URL</code>, <code>GEMINI_API_KEY</code>,
+<code>JWT_SECRET_KEY</code>, <code>FLASK_SECRET_KEY</code>).</li>
+<li>Blueprint registration (<code>api_bp</code> mounted at
+<code>/api</code>).</li>
+<li>Frontend route wiring (<code>/login</code>, <code>/dashboard</code>,
+<code>/intake/&lt;firm_slug&gt;</code>,
+<code>/leads/&lt;lead_id&gt;</code>).</li>
+<li>Authentication decorators for protected pages.</li>
+</ul>
+<h3 id="public-intake-endpoint">3.2 Public intake endpoint</h3>
+<p><code>POST /api/intake/&lt;firm_slug&gt;</code> in
+<code>api.py</code>:</p>
+<ul>
+<li>Finds tenant by <code>firm_slug</code>.</li>
+<li>Validates request body with <code>IntakeFormSchema</code>
+(Pydantic).</li>
+<li>Enforces contact requirement (phone or email required).</li>
+<li>Enqueues async processing via
+<code>process_intake_task.delay(tenant_id, form_data)</code>.</li>
+<li>Returns <code>{"status": "received"}</code> quickly.</li>
+</ul>
+<p>This keeps the web request lightweight and shifts heavy
+AI/notification work to background workers.</p>
+<h3 id="worker-orchestration">3.3 Worker orchestration</h3>
+<p><code>process_intake_task</code> in <code>workers.py</code> runs the
+core business pipeline:</p>
+<ol type="1">
+<li>Rule engine preprocess (<code>RuleEngine.process</code>):
+<ul>
+<li>Sanitizes user text.</li>
+<li>Detects prompt-injection patterns.</li>
+<li>Applies hard disqualifiers (expired SOL, already represented,
+outside US jurisdiction, no damages).</li>
+</ul></li>
+<li>Gemini scoring (if not disqualified):
+<ul>
+<li>Sends incident narrative to Gemini.</li>
+<li>Expects JSON response with scoring fields.</li>
+<li>Parses and merges AI output.</li>
+</ul></li>
+<li>Score adjustment:
+<ul>
+<li>Applies deterministic modifiers (<code>apply_modifiers</code>) to
+derive final score.</li>
+</ul></li>
+<li>Persistence:
+<ul>
+<li>Saves lead + event logs through database manager methods.</li>
+</ul></li>
+<li>Notification chain:
+<ul>
+<li>Chains client notification task then lawyer notification task.</li>
+</ul></li>
+</ol>
+<h3 id="notification-strategy">3.4 Notification strategy</h3>
+<p><code>notify_client_task</code>:</p>
+<ul>
+<li>Score &gt;= 8: SMS with immediate booking CTA.</li>
+<li>Score &gt;= 5: email acknowledging attorney review.</li>
+<li>Score &lt; 5: decline-style email.</li>
+</ul>
+<p><code>notify_lawyer_task</code>:</p>
+<ul>
+<li>Score &gt;= 8: urgent SMS to lawyer.</li>
+<li>Score &gt;= 5: summary email to lawyer.</li>
+<li>Logs communication and event metadata.</li>
+</ul>
+<p>A periodic retry task is configured to revisit failed
+communications.</p>
+<h2 id="authentication-authorization-and-tenant-isolation">4)
+Authentication, Authorization, and Tenant Isolation</h2>
+<h3 id="login-flow">4.1 Login flow</h3>
+<p><code>POST /api/auth/login</code>:</p>
+<ul>
+<li>Looks up user by email.</li>
+<li>Verifies bcrypt password hash.</li>
+<li>Generates JWT with <code>tenant_id</code>, <code>user_id</code>, and
+<code>role</code>.</li>
+<li>Returns token as <code>httpOnly</code>, <code>secure</code>,
+<code>SameSite=Lax</code> cookie (<code>access_token</code>).</li>
+</ul>
+<h3 id="protected-routes">4.2 Protected routes</h3>
+<p><code>require_auth</code> in <code>auth.py</code>:</p>
+<ul>
+<li>Accepts token from cookie or
+<code>Authorization: Bearer ...</code>.</li>
+<li>Verifies JWT signature and expiration.</li>
+<li>Sets request context globals (<code>g.tenant_id</code>,
+<code>g.user_id</code>, <code>g.role</code>).</li>
+</ul>
+<p><code>require_role</code> supports role-based authorization with
+admin override.</p>
+<h3 id="tenant-model-and-intended-isolation">4.3 Tenant model and
+intended isolation</h3>
+<p>The migration defines multi-tenant schema with UUID identifiers and
+row-level security (RLS) policies in PostgreSQL:</p>
+<ul>
+<li><code>tenants</code>, <code>users</code>, <code>leads</code>,
+<code>lead_events</code>, <code>communications</code>.</li>
+<li>RLS policies bind rows to
+<code>current_setting('app.tenant_id')</code>.</li>
+</ul>
+<p>Design intent: each law firm sees only its own leads and
+communication records.</p>
+<h2 id="data-model-and-persistence-design">5) Data Model and Persistence
+Design</h2>
+<p>From migration and runtime models, important entities are:</p>
+<ul>
+<li><strong>Tenant</strong>: firm profile, contact channels, operational
+settings.</li>
+<li><strong>User</strong>: login identity linked to tenant.</li>
+<li><strong>Lead</strong>: intake data, AI/rule scores, triage
+status.</li>
+<li><strong>LeadEvent</strong>: workflow/audit timeline.</li>
+<li><strong>Communication</strong>: outbound message history, retries,
+provider IDs.</li>
+</ul>
+<p>The project also maintains lightweight dashboard metrics:</p>
+<ul>
+<li>Total leads.</li>
+<li>Average score.</li>
+<li>High-priority count.</li>
+<li>Conversion-related rates.</li>
+</ul>
+<p>In legacy mode (<code>main.py</code>), simpler tables and synchronous
+inserts are used.</p>
+<h2 id="api-surface-and-frontend-usage">6) API Surface and Frontend
+Usage</h2>
+<h3 id="new-api-endpoints-blueprint-in-api.py">6.1 New API endpoints
+(Blueprint in <code>api.py</code>)</h3>
+<ul>
+<li><code>POST /api/intake/&lt;firm_slug&gt;</code>: public intake
+submission.</li>
+<li><code>POST /api/auth/login</code>: issue authenticated session
+token.</li>
+<li><code>GET /api/dashboard/stats</code>: protected KPI metrics.</li>
+<li><code>GET /api/leads?page=N</code>: protected paginated lead
+list.</li>
+<li><code>GET /api/health</code>: health check.</li>
+</ul>
+<h3 id="legacy-api-endpoints-main.py">6.2 Legacy API endpoints
+(<code>main.py</code>)</h3>
+<ul>
+<li><code>POST /intake</code>: synchronous intake.</li>
+<li><code>GET /api/stats</code>: admin dashboard stats (API-key
+guarded).</li>
+<li><code>GET /api/leads</code>: admin leads list (API-key
+guarded).</li>
+<li><code>GET /admin</code>: admin page (API-key guarded).</li>
+</ul>
+<h3 id="frontend-integration-patterns">6.3 Frontend integration
+patterns</h3>
+<p>Current templates show mixed usage:</p>
+<ul>
+<li><code>templates/login.html</code> correctly calls
+<code>POST /api/auth/login</code>.</li>
+<li><code>templates/form.html</code> posts to
+<code>POST /api/intake/lexbridge</code>.</li>
+<li><code>templates/dashboard.html</code> fetches legacy endpoints
+(<code>/api/stats</code> and <code>/api/leads</code>) with
+<code>?key=...</code>.</li>
+<li><code>static/js/match-wizard.js</code> posts to legacy
+<code>/intake</code>.</li>
+</ul>
+<p>This indicates a transition state where some pages use the new stack
+while others still consume legacy routes.</p>
+<h2 id="external-services-and-their-roles">7) External Services and
+Their Roles</h2>
+<ul>
+<li><strong>Gemini API</strong>:
+<ul>
+<li>Structured triage scoring in both sync and async paths.</li>
+<li>Fallback behavior exists (heuristic mode in
+<code>intake_scorer.py</code>) when AI is unavailable.</li>
+</ul></li>
+<li><strong>Redis + Celery</strong>:
+<ul>
+<li>Queue and execute background jobs.</li>
+<li>If Redis is not reachable, eager mode can run tasks synchronously
+for local testing.</li>
+</ul></li>
+<li><strong>Twilio</strong>:
+<ul>
+<li>Sends high-priority SMS to clients/lawyers.</li>
+<li>Used in routing and notification layers.</li>
+</ul></li>
+<li><strong>SMTP/Gmail</strong>:
+<ul>
+<li>Sends non-urgent updates and lawyer summaries.</li>
+</ul></li>
+<li><strong>DungBeetle</strong>:
+<ul>
+<li>Optional async SQL reporting client for heavy read workloads.</li>
+</ul></li>
+</ul>
+<h2 id="reliability-security-and-operational-characteristics">8)
+Reliability, Security, and Operational Characteristics</h2>
+<p>Strengths visible in current design:</p>
+<ul>
+<li>Input validation via Pydantic schema.</li>
+<li>Authentication with JWT and bcrypt.</li>
+<li>Rule-engine guard before AI invocation.</li>
+<li>Asynchronous orchestration for scale and resilience.</li>
+<li>Retry semantics in Celery tasks.</li>
+<li>Multi-tenant schema and intended RLS.</li>
+</ul>
+<p>Important practical caveats from code inspection:</p>
+<ul>
+<li><code>main.py</code> and <code>app.py</code> represent different
+generations of architecture.</li>
+<li>Some templates/scripts still call legacy routes.</li>
+<li><code>database.py</code> runtime models are simplified compared with
+richer migration schema.</li>
+<li>Worker code expects methods/entities not fully reflected in the
+simplified runtime manager (likely an in-progress refactor).</li>
+<li>Environment key names differ between modules in a few places
+(<code>TWILIO_SID</code> vs <code>TWILIO_ACCOUNT_SID</code>, etc.).</li>
+</ul>
+<p>So the project’s basic idea is clear and strong, but full production
+alignment requires consolidating the legacy/new paths into one
+consistent execution model.</p>
+<h2 id="end-to-end-mental-model-simple-view">9) End-to-End Mental Model
+(Simple View)</h2>
+<p>If you explain this project to a new engineer:</p>
+<ol type="1">
+<li>A prospective client submits intake details.</li>
+<li>The system sanitizes and screens the input with deterministic
+legal/business rules.</li>
+<li>AI estimates case quality and produces structured reasoning.</li>
+<li>Scores are normalized to a final decision grade.</li>
+<li>Lead and audit data are saved under the law firm’s tenant.</li>
+<li>Client and attorney notifications are sent based on urgency
+tier.</li>
+<li>Staff uses dashboard APIs to monitor pipeline and act on leads.</li>
+</ol>
+<p>That is the core product loop: <strong>capture -&gt; evaluate -&gt;
+persist -&gt; notify -&gt; manage</strong>.</p>
+<h2 id="conclusion">10) Conclusion</h2>
+<p>LEGAL_INTAKE2 is a legal-intake automation backend built around a
+modern pattern: tenant-aware APIs, AI-assisted scoring, and asynchronous
+workflow execution. The codebase currently includes both legacy and
+newer implementations, but the intended architecture is the newer
+<code>app.py</code> + <code>api.py</code> + <code>workers.py</code>
+pipeline. APIs are used by web templates for login, intake submission,
+and dashboard data retrieval, while background tasks integrate AI and
+communications providers to drive near-real-time legal lead
+operations.</p>
+<p>For long-term maintainability, the main strategic task is
+architecture convergence: migrate remaining legacy endpoint consumers to
+the newer API surface and ensure one authoritative data model across
+runtime ORM and migrations.</p>
+</body>
+</html>

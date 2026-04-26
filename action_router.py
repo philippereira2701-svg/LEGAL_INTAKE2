@@ -1,56 +1,39 @@
-import os
-from twilio.rest import Client
-from dotenv import load_dotenv
-from logger import logger
+from typing import Any, Dict
 
-# Load environment variables
-load_dotenv()
+from twilio.rest import Client
+
 
 class ActionRouter:
-    """
-    Orchestrates automated workflows for LEGAL_PRJ based on lead quality.
-    """
-    def __init__(self):
-        # Twilio Config for automated follow-up
-        self.twilio_sid = os.getenv("TWILIO_SID")
-        self.twilio_token = os.getenv("TWILIO_TOKEN")
-        self.twilio_phone = os.getenv("TWILIO_PHONE")
+    """Applies automation branch from AI recommendation."""
 
-    def route_action(self, lead_data):
-        """
-        Executes the specialized workflow for the lead.
-        """
-        action = lead_data.get('recommended_action', 'MANUAL_REVIEW')
-        logger.info(f"ROUTING | Lead:{lead_data['client_name']} | Action:{action}")
-
+    def route_action(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        action = lead_data.get("recommended_action", "MANUAL_REVIEW")
         if action == "AUTO_BOOK":
-            self._trigger_immediate_followup(lead_data)
+            self._trigger_immediate_followup(lead_data, tenant_data)
         elif action == "MANUAL_REVIEW":
             self._notify_paralegal_queue(lead_data)
         elif action == "SEND_REJECTION":
             self._send_soft_rejection(lead_data)
 
-    def _trigger_immediate_followup(self, lead_data):
-        """Sends an immediate 'Golden Minute' confirmation text to the client."""
-        if not all([self.twilio_sid, self.twilio_token, self.twilio_phone]):
-            logger.warning("Twilio suppressed for Follow-up.")
+    def _trigger_immediate_followup(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        sid = tenant_data.get("twilio_sid")
+        token = tenant_data.get("twilio_token")
+        from_phone = tenant_data.get("twilio_phone")
+        if not all([sid, token, from_phone, lead_data.get("client_phone")]):
             return
 
-        try:
-            client = Client(self.twilio_sid, self.twilio_token)
-            message = client.messages.create(
-                body=f"Hello {lead_data['client_name']}, an attorney from LEGAL_PRJ has been matched to your case. We will call you shortly.",
-                from_=self.twilio_phone,
-                to=lead_data['client_phone']
-            )
-            logger.info(f"AUTO-FOLLOWUP SENT | Client:{lead_data['client_name']}")
-        except Exception as e:
-            logger.error(f"AUTO-FOLLOWUP ERROR | {str(e)}")
+        client = Client(sid, token)
+        client.messages.create(
+            body=(
+                f"Hi {lead_data.get('client_name')}, this is LexBridge for {tenant_data.get('firm_name')}. "
+                f"Please book now: {tenant_data.get('calendly_link') or 'A team member will call you shortly.'}"
+            ),
+            from_=from_phone,
+            to=lead_data.get("client_phone"),
+        )
 
-    def _notify_paralegal_queue(self, lead_data):
-        # Simulated webhook to CRM
-        logger.info(f"CRM | Lead {lead_data['client_name']} pushed to MANUAL_QUEUE.")
+    def _notify_paralegal_queue(self, lead_data: Dict[str, Any]) -> None:
+        return
 
-    def _send_soft_rejection(self, lead_data):
-        # Soft rejection logic
-        logger.info(f"AUTO-DECLINE | Lead {lead_data['client_name']} soft rejected via email.")
+    def _send_soft_rejection(self, lead_data: Dict[str, Any]) -> None:
+        return

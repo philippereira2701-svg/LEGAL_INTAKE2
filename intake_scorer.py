@@ -19,6 +19,8 @@ class IntakeScoringResult(BaseModel):
     damages: ScoringPillar
     statute_of_limitations: ScoringPillar
     summary: str
+    valuation_reasoning: str
+    estimated_case_value: float = Field(ge=0)
     red_flags: List[str]
     tier: Literal["BOOK NOW", "ATTORNEY REVIEW", "BORDERLINE", "DECLINE"]
     recommended_action: Literal["AUTO_BOOK", "MANUAL_REVIEW", "SEND_REJECTION"]
@@ -46,6 +48,8 @@ class IntakeScorer:
             damages=ScoringPillar(score=score, reasoning="Heuristic Scan"),
             statute_of_limitations=ScoringPillar(score=10, reasoning="Recent"),
             summary="[HEURISTIC] Automated keyword-based triage completed.",
+            valuation_reasoning="Keyword severity estimate.",
+            estimated_case_value=25000.0 if score >= 7 else 7500.0,
             red_flags=flags,
             tier="ATTORNEY REVIEW",
             recommended_action="MANUAL_REVIEW"
@@ -56,11 +60,12 @@ class IntakeScorer:
             return self._get_heuristic_score(lead_data)
 
         system_instruction = (
-            "You are a Senior Personal Injury Intake Specialist for LEGAL_PRJ. Analyze the provided lead data "
-            "rigorously for three pillars: 1. Liability (who is at fault?), 2. Damages (severity of injury/loss), "
-            "and 3. Statute of Limitations (jurisdictional deadlines). "
-            "Identify red flags such as: already represented, user at fault, no injury, or old incident. "
-            "Return structured JSON matching the provided schema."
+            "You are a Senior Personal Injury Intake Specialist for LexBridge. "
+            "Think step-by-step internally and classify injury severity into value buckets "
+            "(soft tissue, fracture/surgery, catastrophic/permanent impairment). "
+            "Do not expose private chain-of-thought; instead output a concise valuation_reasoning field. "
+            "Analyze liability, damages, statute of limitations, and estimate realistic case value in USD. "
+            "Return strict JSON matching schema."
         )
 
         prompt = f"{system_instruction}\n\nCLIENT DATA:\n{lead_data}"

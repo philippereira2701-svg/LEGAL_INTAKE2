@@ -1,57 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LEGAL_PRJ | Admin Command Center</title>
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+{% block title %}Dashboard | LexBridge{% endblock %}
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/typography.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/nav.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badge.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modal.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/utilities.css') }}">
-
-    <style>
-        body { background: var(--bg-primary); }
-        .admin-container { padding: 120px var(--grid-padding) 60px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 3rem; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 1.5rem; border-radius: var(--radius-md); }
-        .stat-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent-gold); }
-        .lead-table-container { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; }
-        .lead-table { width: 100%; border-collapse: collapse; }
-        .lead-table th { text-align: left; padding: 1rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; background: rgba(255,255,255,0.01); }
-        .lead-table td { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; transition: background 0.2s ease; }
-        .lead-table tr:hover td { background: rgba(255,255,255,0.02); }
-        #live-clock { font-family: var(--font-mono); color: var(--text-secondary); font-size: 0.8rem; }
-        
-        /* QR Styles */
-        #qrcode { background: white; padding: 20px; display: inline-block; border-radius: 12px; margin-bottom: 2rem; }
-        #qrcode img { display: block; }
-    </style>
-</head>
-<body>
-    <nav class="navbar scrolled">
-        <div class="nav-logo">
-            <img src="{{ url_for('static', filename='assets/icons/scales.svg') }}" style="width: 24px; filter: brightness(0) saturate(100%) invert(80%) sepia(21%) saturate(980%) hue-rotate(345deg) brightness(87%) contrast(85%);">
-            Lex<span class="accent">B</span>ridge <span class="label" style="margin-left: 10px; opacity: 0.5;">Command</span>
+{% block app_header %}
+<header class="app-header">
+    <div class="container app-header-inner">
+        <a href="/dashboard" class="brand"><span class="brand-mark">LB</span><span>LexBridge Command</span></a>
+        <div style="display: flex; gap: 24px; align-items: center;">
+            <div id="live-clock" class="mono" style="color: var(--text-secondary);">00:00:00</div>
+            <button class="btn" onclick="openShare()">Share Portal</button>
         </div>
-        <div style="display: flex; gap: 2.5rem; align-items: center;">
-            <div id="live-clock">00:00:00</div>
-            <button class="btn btn-ghost-gold" onclick="openShare()">Share Portal</button>
-        </div>
-    </nav>
+    </div>
+</header>
+{% endblock %}
 
-    <main class="admin-container">
+{% block content %}
+    <div class="container">
+        <div>
+            <h1 class="page-title">Lead Operations Dashboard</h1>
+            <p class="page-subtitle">Monitor incoming leads, AI qualification, and response velocity in one place.</p>
+        </div>
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="label" style="margin-bottom: 0.5rem;">Total Intake</div>
@@ -71,8 +38,8 @@
             </div>
         </div>
 
-        <div class="lead-table-container">
-            <table class="lead-table">
+        <div class="table-container">
+            <table>
                 <thead>
                     <tr>
                         <th>Time</th>
@@ -86,7 +53,7 @@
                 </tbody>
             </table>
         </div>
-    </main>
+    </div>
 
     <!-- Share Modal -->
     <div class="modal-overlay" id="share-overlay" onclick="closeShare()"></div>
@@ -106,17 +73,20 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+        const TOKEN = localStorage.getItem('lexbridge_token') || '';
         const API_KEY = new URLSearchParams(window.location.search).get('key') || '';
         
         async function apiFetch(endpoint) {
             const url = endpoint + (endpoint.includes('?') ? '&' : '?') + 'key=' + API_KEY;
             try {
-                const res = await fetch(url);
+                const res = await fetch(url, {
+                    headers: TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {}
+                });
                 if (res.status === 401) {
-                    alert("Unauthorized. LEGAL_PRJ Access Key Required.");
-                    window.location.href = '/';
+                    alert("Unauthorized session. Please login again.");
+                    window.location.href = '/login';
                     return null;
                 }
                 return await res.json();
@@ -127,7 +97,7 @@
         }
 
         async function refresh() {
-            const stats = await apiFetch('/api/stats');
+            const stats = await apiFetch('/api/dashboard/stats');
             const leads = await apiFetch('/api/leads');
             if (!stats || !leads) return;
 
@@ -153,7 +123,7 @@
                                 <span style="color: ${scoreColor}; font-weight: 600; font-family: var(--font-mono);">${l.ai_score}/10</span>
                             </div>
                         </td>
-                        <td><div class="badge badge-gold">${l.ai_tier}</div></td>
+                        <td><span class="badge ${l.ai_score >= 8 ? 'badge-green' : l.ai_score >= 5 ? 'badge-amber' : 'badge-red'}">${l.ai_tier}</span></td>
                     </tr>
                 `;
             }).join('');
@@ -192,6 +162,5 @@
 
         setInterval(refresh, 10000);
         refresh();
-    </script>
-</body>
-</html>
+</script>
+{% endblock %}

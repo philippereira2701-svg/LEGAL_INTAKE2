@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% block title %}Login | LexBridge{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-card">
-        <h2 style="margin-bottom: 8px;">Welcome back.</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 32px;">Sign in to your intake dashboard.</p>
+        <h2 class="page-title">Welcome back</h2>
+        <p class="page-subtitle">Sign in to your firm dashboard.</p>
         
         <form id="loginForm">
             <div class="form-group">
@@ -28,18 +29,23 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const password = document.getElementById('password').value;
     const errorMsg = document.getElementById('errorMsg');
 
+    errorMsg.style.display = 'none';
     try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch('/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
 
         if (response.ok) {
+            const data = await response.json();
+            if (data.token) {
+                localStorage.setItem('lexbridge_token', data.token);
+            }
             window.location.href = '/dashboard';
         } else {
             const data = await response.json();
-            errorMsg.textContent = data.msg || 'Invalid credentials';
+            errorMsg.textContent = data.message || data.msg || 'Invalid credentials';
             errorMsg.style.display = 'block';
         }
     } catch (err) {

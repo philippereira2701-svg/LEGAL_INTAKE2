@@ -1,0 +1,25 @@
+name: Compliance Gate
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+
+jobs:
+  policy-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure data policy exists
+        run: test -f src/config/dataPolicy.ts
+
+      - name: Block training enablement without reviewed consent flow
+        run: |
+          if grep -q "TRAIN_ON_CLIENT_DATA: true" src/config/dataPolicy.ts; then
+            if [ "${CONSENT_FLOW_REVIEWED}" != "true" ]; then
+              echo "CONSENT_FLOW_REVIEWED=true is required when TRAIN_ON_CLIENT_DATA=true"
+              exit 1
+            fi
+          fi

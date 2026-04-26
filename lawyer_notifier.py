@@ -1,86 +1,79 @@
-import os
 import smtplib
-import json
-from datetime import datetime
 from email.mime.text import MIMEText
-from twilio.rest import Client
-from dotenv import load_dotenv
-from logger import logger
+from typing import Any, Dict
 
-# Load environment variables
-load_dotenv()
+from twilio.rest import Client
+
 
 class LawyerNotifier:
-    """
-    Handles multi-channel notifications for high-priority leads.
-    """
-    def __init__(self):
-        # Email Config
-        self.smtp_server = os.getenv("SMTP_SERVER")
-        self.smtp_port = int(os.getenv("SMTP_PORT", 587))
-        self.email_user = os.getenv("SMTP_USER")
-        self.email_pass = os.getenv("SMTP_PASS")
-        self.lawyer_email = os.getenv("LAWYER_EMAIL", "lawyer@legalprj.com")
+    """Sends lawyer notifications and urgent Twilio voice bridge calls."""
 
-        # Twilio Config
-        self.twilio_sid = os.getenv("TWILIO_SID")
-        self.twilio_token = os.getenv("TWILIO_TOKEN")
-        self.twilio_phone = os.getenv("TWILIO_PHONE")
-        self.lawyer_phone = os.getenv("LAWYER_PHONE")
+    def notify_lawyer(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        if lead_data.get("ai_score", 0) < 8:
+            return
+        self._send_email(lead_data, tenant_data)
+        self._send_sms(lead_data, tenant_data)
+        self._trigger_voice_bridge(lead_data, tenant_data)
 
-    def notify_lawyer(self, lead_data):
-        """Dispatches email and SMS for high-tier leads."""
-        if lead_data.get('ai_score', 0) >= 8:
-            logger.info(f"NOTIFICATION | High Priority Lead detected for LEGAL_PRJ: {lead_data['client_name']}")
-            self._send_email(lead_data)
-            self._send_sms(lead_data)
-        else:
-            logger.info(f"NOTIFICATION | Regular Lead: {lead_data['client_name']} queued.")
-
-    def _send_email(self, lead_data):
-        if not all([self.smtp_server, self.email_user, self.email_pass]):
-            logger.warning("SMTP Config missing. Email suppressed.")
+    def _send_email(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        email_user = tenant_data.get("gmail_address")
+        email_pass = tenant_data.get("gmail_app_password")
+        lawyer_email = tenant_data.get("lawyer_email")
+        if not all([email_user, email_pass, lawyer_email]):
             return
 
-        msg_body = f"""
-        LEGAL_PRJ | URGENT HIGH-PRIORITY LEAD
-        ------------------------------------
-        Client: {lead_data['client_name']}
-        Phone: {lead_data['client_phone']}
-        Email: {lead_data['client_email']}
-        
-        AI Score: {lead_data['ai_score']}/10
-        AI Summary: {lead_data['ai_summary']}
-        
-        Recommended Action: {lead_data['recommended_action']}
-        """
-        
+        msg_body = (
+            "LEXBRIDGE | HIGH-PRIORITY PI LEAD\n"
+            "---------------------------------\n"
+            f"Client: {lead_data.get('client_name')}\n"
+            f"Phone: {lead_data.get('client_phone')}\n"
+            f"Email: {lead_data.get('client_email')}\n"
+            f"AI Score: {lead_data.get('ai_score')}/10\n"
+            f"Estimated Case Value: ${lead_data.get('estimated_case_value')}\n"
+            f"Summary: {lead_data.get('ai_summary')}\n"
+        )
         msg = MIMEText(msg_body)
-        msg['Subject'] = f"LEGAL_PRJ | High Priority: {lead_data['client_name']}"
-        msg['From'] = self.email_user
-        msg['To'] = self.lawyer_email
+        msg["Subject"] = f"LexBridge Urgent Lead: {lead_data.get('client_name')}"
+        msg["From"] = email_user
+        msg["To"] = lawyer_email
 
-        try:
-            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.email_user, self.email_pass)
-                server.send_message(msg)
-            logger.info(f"EMAIL SENT | To:{self.lawyer_email}")
-        except Exception as e:
-            logger.error(f"EMAIL ERROR | {str(e)}")
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as server:
+            server.login(email_user, email_pass)
+            server.send_message(msg)
 
-    def _send_sms(self, lead_data):
-        if not all([self.twilio_sid, self.twilio_token, self.twilio_phone, self.lawyer_phone]):
-            logger.warning("Twilio Config missing. SMS suppressed.")
+    def _send_sms(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        sid = tenant_data.get("twilio_sid")
+        token = tenant_data.get("twilio_token")
+        from_phone = tenant_data.get("twilio_phone")
+        to_phone = tenant_data.get("lawyer_phone")
+        if not all([sid, token, from_phone, to_phone]):
             return
 
-        try:
-            client = Client(self.twilio_sid, self.twilio_token)
-            message = client.messages.create(
-                body=f"LEGAL_PRJ URGENT: {lead_data['client_name']} (Score: {lead_data['ai_score']}/10) needs counsel immediately.",
-                from_=self.twilio_phone,
-                to=self.lawyer_phone
-            )
-            logger.info(f"SMS SENT | SID:{message.sid}")
-        except Exception as e:
-            logger.error(f"SMS ERROR | {str(e)}")
+        client = Client(sid, token)
+        client.messages.create(
+            body=(
+                f"URGENT PI lead {lead_data.get('ai_score')}/10 | {lead_data.get('client_name')} "
+                f"| value ${lead_data.get('estimated_case_value')}"
+            ),
+            from_=from_phone,
+            to=to_phone,
+        )
+
+    def _trigger_voice_bridge(self, lead_data: Dict[str, Any], tenant_data: Dict[str, Any]) -> None:
+        sid = tenant_data.get("twilio_sid")
+        token = tenant_data.get("twilio_token")
+        from_phone = tenant_data.get("twilio_phone")
+        lawyer_phone = tenant_data.get("lawyer_phone")
+        client_phone = lead_data.get("client_phone")
+        if not all([sid, token, from_phone, lawyer_phone, client_phone]):
+            return
+
+        # First call reaches lawyer. If accepted, TwiML dials the client to bridge both sides.
+        twiml = f"<Response><Say>High priority lead from LexBridge. Connecting you now.</Say><Dial>{client_phone}</Dial></Response>"
+        client = Client(sid, token)
+        client.calls.create(
+            twiml=twiml,
+            from_=from_phone,
+            to=lawyer_phone,
+            timeout=20,
+        )

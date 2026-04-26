@@ -3,15 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intake Dashboard</title>
+    <title>{% block title %}LexBridge{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
-<body>
-    {% block content %}{% endblock %}
+<body class="app-body">
+    {% block app_header %}
+    <header class="app-header">
+        <div class="container app-header-inner">
+            <a href="/" class="brand">
+                <span class="brand-mark">LB</span>
+                <span>LexBridge</span>
+            </a>
+            <nav class="app-nav">
+                <a href="/login">Login</a>
+                <a href="/dashboard">Dashboard</a>
+            </nav>
+        </div>
+    </header>
+    {% endblock %}
+    <main class="app-main">
+        {% block content %}{% endblock %}
+    </main>
     <script>
       feather.replace();
     </script>

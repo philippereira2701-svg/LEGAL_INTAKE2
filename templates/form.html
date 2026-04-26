@@ -1,20 +1,21 @@
 {% extends "base.html" %}
+{% block title %}Client Intake | LexBridge{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 64px auto; padding: 0 24px;">
-    <div style="text-align: center; margin-bottom: 48px;">
-        <h1 style="font-size: 32px; margin-bottom: 12px;">Legal Case Review</h1>
-        <p style="color: var(--text-secondary); font-size: 16px;">Tell us about your incident. Our attorneys will review your details immediately.</p>
+<div class="container" style="max-width: 760px;">
+    <div style="margin: 12px 0 28px;">
+        <h1 class="page-title">Personal Injury Intake</h1>
+        <p class="page-subtitle">Tell us what happened. We review your case details immediately and route urgent matters in real time.</p>
     </div>
 
-    <div class="stat-card" style="padding: 40px;">
+    <div class="panel">
         <form id="intakeForm">
             <h3 style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">Contact Information</h3>
             <div class="form-group">
                 <label for="client_name">Full Name</label>
                 <input type="text" id="client_name" required placeholder="John Doe">
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="split-2">
                 <div class="form-group">
                     <label for="client_email">Email Address</label>
                     <input type="email" id="client_email" placeholder="john@example.com">
@@ -83,10 +84,23 @@ document.getElementById('intakeForm').addEventListener('submit', async (e) => {
     };
 
     try {
-        const response = await fetch('/api/intake/lexbridge', {
+        const firmSlug = "{{ firm_slug }}";
+        const response = await fetch(`/api/public/intake/${firmSlug}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                client_name: formData.client_name,
+                client_phone: formData.client_phone || null,
+                client_email: formData.client_email || null,
+                incident_date_raw: formData.incident_date_raw,
+                incident_location: "Unknown",
+                incident_description: formData.incident_description,
+                injuries: formData.hospitalized ? "Hospitalized injury (details in description)" : "Reported injury",
+                police_report_filed: formData.police_report_filed,
+                medical_treatment_received: formData.medical_treatment_received
+            })
         });
 
         if (response.ok) {
@@ -95,7 +109,7 @@ document.getElementById('intakeForm').addEventListener('submit', async (e) => {
             feather.replace();
         } else {
             const data = await response.json();
-            alert('Error: ' + (data.msg || 'Submission failed'));
+            alert('Error: ' + (data.message || data.msg || 'Submission failed'));
             btn.disabled = false;
             btn.textContent = 'Submit for Review';
         }

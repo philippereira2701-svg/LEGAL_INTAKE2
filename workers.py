@@ -1,231 +1,196 @@
 import os
-import json
-import uuid
-import logging
-from typing import Dict, Any
-from celery import Celery, chain
-import google.generativeai as genai
-from twilio.rest import Client as TwilioClient
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from database import SessionLocal, DatabaseManager, Lead, Tenant
-from rule_engine import RuleEngine
+from datetime import datetime, timezone
+from typing import Dict
 
-# Configure Logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from celery import Celery
 
-# Celery Configuration
+from database import CommunicationAttempt, DatabaseManager, Lead, SessionLocal, Tenant
+from services.communications import CommunicationsService
+from services.mercury_mode import MercuryModeService
+from intake_scorer import IntakeScorer
+
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-celery = Celery('tasks', broker=REDIS_URL, backend=REDIS_URL)
+celery = Celery("lexbridge_tasks", broker=REDIS_URL, backend=REDIS_URL)
 
-# --- AUTO-FALLBACK FOR REDIS ---
 try:
-    # Test connection
     import redis
-    r = redis.from_url(REDIS_URL)
-    r.ping()
+
+    redis.from_url(REDIS_URL).ping()
 except Exception:
-    logger.warning("Redis not found. Enabling Celery Eager Mode (tasks will run synchronously).")
-    celery.conf.update(
-        task_always_eager=True,
-        task_eager_propagates=True
-    )
-
-# External API Configuration
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-TWILIO_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_FROM = os.getenv("TWILIO_FROM_NUMBER")
-GMAIL_USER = os.getenv("GMAIL_ADDRESS")
-GMAIL_PASS = os.getenv("GMAIL_APP_PASSWORD")
-DASHBOARD_URL = os.getenv("DASHBOARD_URL", "http://localhost:5000")
+    celery.conf.update(task_always_eager=True, task_eager_propagates=True)
 
 @celery.task(bind=True, max_retries=3)
-def process_intake_task(self, tenant_id: str, form_data: Dict[str, Any]):
-    """Master task to process a new lead intake"""
+def process_lead_followups_task(self, tenant_id: str, lead_id: int) -> None:
     session = SessionLocal()
     db = DatabaseManager(session)
-    re = RuleEngine()
-    tenant_uuid = uuid.UUID(tenant_id)
-
     try:
-        # 1. Rule Engine Pre-processing
-        result = re.process(form_data)
-        
-        if not result['is_disqualified']:
-            # 2. Gemini AI Analysis
-            model = genai.GenerativeModel('gemini-pro')
-            prompt = f"""
-            Analyze this legal intake for a personal injury law firm.
-            
-            Description: {form_data['incident_description']}
-            
-            Return ONLY a JSON object with these keys:
-            - ai_score: integer 1-10
-            - ai_tier: "LOW", "MEDIUM", "HIGH"
-            - ai_summary: one sentence summary
-            - liability_score: 1-10
-            - damages_score: 1-10
-            - sol_score: 1-10
-            - red_flags: list of strings
-            - recommended_action: "BOOK_NOW", "STAFF_REVIEW", "REJECT"
-            """
-            
-            response = model.generate_content(prompt)
-            # Basic parsing (improve with regex if needed)
-            ai_data = json.loads(response.text.strip().replace('```json', '').replace('```', ''))
-            
-            # 3. Apply Modifiers
-            final_score = re.apply_modifiers(ai_data['ai_score'], form_data)
-            
-            # Merge results
-            result.update(ai_data)
-            result['final_score'] = final_score
-            result['rule_engine_score'] = ai_data['ai_score'] # Or some other logic
-        
-        # 4. Persistence
-        lead = db.insert_lead(tenant_uuid, form_data, result)
-        db.log_event(lead.id, tenant_uuid, 'scored', result)
-        
-        # 5. Chain notifications
-        chain(
-            notify_client_task.s(str(lead.id), tenant_id),
-            notify_lawyer_task.s(str(lead.id), tenant_id)
-        ).apply_async()
+        lead = session.query(Lead).filter(Lead.id == lead_id, Lead.tenant_id == tenant_id).first()
+        tenant = session.query(Tenant).filter(Tenant.id == tenant_id).first()
+        if not lead or not tenant:
+            return
 
-        return str(lead.id)
+        scorer = IntakeScorer()
+        ai_input = (
+            f"{lead.client_name}\n"
+            f"{lead.incident_description or ''}\n"
+            f"{lead.injuries_sustained or ''}\n"
+            f"{lead.incident_location or ''}"
+        )
+        score_result = scorer.score_lead(ai_input)
+        lead.ai_score = score_result.lead_score
+        lead.ai_tier = score_result.tier
+        lead.ai_summary = score_result.summary
+        lead.estimated_case_value = score_result.estimated_case_value
+        lead.liability_score = score_result.liability.score
+        lead.damages_score = score_result.damages.score
+        lead.sol_score = score_result.statute_of_limitations.score
+        lead.red_flags = score_result.red_flags
+        lead.recommended_action = score_result.recommended_action
+        session.commit()
 
-    except Exception as e:
-        logger.error(f"Error processing intake: {str(e)}")
-        session.rollback()
-        raise self.retry(exc=e, countdown=60)
+        db.create_lead_event(
+            tenant_id,
+            lead.id,
+            event_type="lead.scoring.completed",
+            event_payload={
+                "ai_score": lead.ai_score,
+                "recommended_action": lead.recommended_action,
+            },
+        )
+        db.update_lead_action(tenant_id, lead.id, "ASYNC_SCORING_RECORDED")
+
+        mercury = MercuryModeService(db)
+        mercury.maybe_trigger(tenant_id, lead, tenant.lawyer_phone)
+    except Exception as exc:
+        db.log_error(
+            context="workers.process_lead_followups_task",
+            error=exc,
+            payload={"tenant_id": tenant_id, "lead_id": lead_id},
+            tenant_id=tenant_id,
+        )
+        raise self.retry(exc=exc, countdown=30 * (self.request.retries + 1))
     finally:
         session.close()
+
 
 @celery.task(bind=True, max_retries=3)
-def notify_client_task(self, lead_id: str, tenant_id: str):
-    """Send automated response to the client based on score"""
+def dispatch_pending_communications_task(self) -> Dict[str, int]:
     session = SessionLocal()
     db = DatabaseManager(session)
-    lead_uuid = uuid.UUID(lead_id)
-    tenant_uuid = uuid.UUID(tenant_id)
-    
-    lead = db.get_lead_by_id(lead_uuid, tenant_uuid)
-    tenant = session.query(Tenant).filter(Tenant.id == tenant_uuid).first()
-    
-    if not lead or not tenant:
-        return
-
+    sent = 0
+    failed = 0
     try:
-        score = lead.final_score
-        message = ""
-        channel = "email"
-        
-        if score >= 8:
-            channel = "sms"
-            message = f"Hello {lead.client_name}, we have reviewed your inquiry regarding your injury. Based on the details, we'd like to speak with you immediately. Please book a time here: {tenant.calendly_link}"
-            if lead.client_phone:
-                client = TwilioClient(TWILIO_SID, TWILIO_TOKEN)
-                msg = client.messages.create(body=message, from_=TWILIO_FROM, to=lead.client_phone)
-                db.log_communication(lead_uuid, tenant_uuid, 'sms', lead.client_phone, 'client', message)
-                db.update_communication_status(None, 'sent', msg.sid) # Need to handle comm_id better
-        
-        elif score >= 5:
-            message = f"Dear {lead.client_name}, thank you for contacting {tenant.firm_name}. An attorney is currently reviewing your case details and will follow up with you within 24 hours."
-            send_email(lead.client_email, f"Inquiry Received - {tenant.firm_name}", message)
-            db.log_communication(lead_uuid, tenant_uuid, 'email', lead.client_email, 'client', message, f"Inquiry Received - {tenant.firm_name}")
-            
-        else:
-            message = f"Dear {lead.client_name}, thank you for reaching out to us. After a preliminary review, we are unable to take your case at this time. We recommend contacting your local bar association for a referral."
-            send_email(lead.client_email, f"Case Status Update - {tenant.firm_name}", message)
-            db.log_communication(lead_uuid, tenant_uuid, 'email', lead.client_email, 'client', message, f"Case Status Update - {tenant.firm_name}")
-
-        db.log_event(lead_uuid, tenant_uuid, f'{channel}_sent', {"score": score})
-
-    except Exception as e:
-        logger.error(f"Error notifying client: {str(e)}")
-        if self.request.retries == self.max_retries:
-            db.log_event(lead_uuid, tenant_uuid, 'notification_failed', {"error": str(e)}, success=False)
-        raise self.retry(exc=e, countdown=120)
+        attempts = db.get_pending_communication_attempts(limit=100)
+        comms = CommunicationsService(db)
+        for attempt in attempts:
+            tenant = session.query(Tenant).filter(Tenant.id == attempt.tenant_id).first()
+            if not tenant:
+                failed += 1
+                db.update_communication_attempt(
+                    attempt.id,
+                    status="dead_letter",
+                    failure_reason="tenant_missing",
+                    retry_count=attempt.retry_count + 1,
+                )
+                continue
+            comms.deliver_attempt(
+                attempt,
+                {
+                    "twilio_sid": tenant.twilio_sid,
+                    "twilio_token": tenant.twilio_token,
+                    "twilio_phone": tenant.twilio_phone,
+                },
+            )
+            refreshed = session.query(CommunicationAttempt).filter(CommunicationAttempt.id == attempt.id).first()
+            if refreshed and refreshed.status == "sent":
+                sent += 1
+            else:
+                failed += 1
+        return {"sent": sent, "failed": failed}
+    except Exception as exc:
+        db.log_error("workers.dispatch_pending_communications_task", exc)
+        raise self.retry(exc=exc, countdown=30 * (self.request.retries + 1))
     finally:
         session.close()
 
-@celery.task(bind=True)
-def notify_lawyer_task(self, lead_id: str, tenant_id: str):
-    """Notify the lawyer about a new lead or notification failure"""
+
+@celery.task(bind=True, max_retries=3)
+def process_pending_mercury_escalations_task(self) -> Dict[str, int]:
     session = SessionLocal()
     db = DatabaseManager(session)
-    lead_uuid = uuid.UUID(lead_id)
-    tenant_uuid = uuid.UUID(tenant_id)
-    
-    lead = db.get_lead_by_id(lead_uuid, tenant_uuid)
-    tenant = session.query(Tenant).filter(Tenant.id == tenant_uuid).first()
-    
-    if not lead or not tenant:
-        return
-
+    processed = 0
+    advanced = 0
     try:
-        score = lead.final_score
-        detail_url = f"{DASHBOARD_URL}/leads/{lead.id}"
-        
-        if score >= 8:
-            # Urgent SMS
-            message = f"URGENT {score}/10 - {lead.client_name}. {lead.ai_summary[:50]}. Lib:{lead.liability_score} Dam:{lead.damages_score}. Client SMS sent. Dashboard: {detail_url}"
-            if tenant.lawyer_phone:
-                client = TwilioClient(TWILIO_SID, TWILIO_TOKEN)
-                client.messages.create(body=message, from_=TWILIO_FROM, to=tenant.lawyer_phone)
-                db.log_communication(lead_uuid, tenant_uuid, 'sms', tenant.lawyer_phone, 'lawyer', message)
-        
-        # Always send email summary for score >= 5
-        if score >= 5:
-            subject = f"New High-Value Lead: {lead.client_name} ({score}/10)"
-            body = f"A new lead has been scored {score}/10.\n\nSummary: {lead.ai_summary}\nRed Flags: {', '.join(lead.red_flags)}\n\nView details: {detail_url}"
-            send_email(tenant.lawyer_email, subject, body)
-            db.log_communication(lead_uuid, tenant_uuid, 'email', tenant.lawyer_email, 'lawyer', body, subject)
+        pending = db.get_pending_mercury_escalations(limit=100)
+        for escalation in pending:
+            processed += 1
+            policy = db.get_mercury_policy(escalation.tenant_id)
+            tenant = session.query(Tenant).filter(Tenant.id == escalation.tenant_id).first()
+            if not tenant:
+                continue
+            elapsed_seconds = (datetime.now(timezone.utc) - escalation.triggered_at).total_seconds()
+            if elapsed_seconds < policy.timeout_seconds:
+                db.create_lead_event(
+                    escalation.tenant_id,
+                    escalation.lead_id,
+                    "mercury.pending",
+                    {"escalation_id": escalation.id, "level": escalation.level},
+                )
+                continue
 
-        db.log_event(lead_uuid, tenant_uuid, 'lawyer_notified', {"score": score})
+            contacts = [c for c in policy.contacts if c]
+            if tenant.lawyer_phone and tenant.lawyer_phone not in contacts:
+                contacts.insert(0, tenant.lawyer_phone)
 
-    except Exception as e:
-        logger.error(f"Error notifying lawyer: {str(e)}")
+            db.expire_mercury_escalation(escalation.id)
+            if escalation.level >= policy.max_levels or escalation.level >= len(contacts):
+                db.create_lead_event(
+                    escalation.tenant_id,
+                    escalation.lead_id,
+                    "mercury.exhausted",
+                    {"escalation_id": escalation.id, "level": escalation.level},
+                )
+                continue
+
+            next_level = escalation.level + 1
+            owner_phone = contacts[next_level - 1]
+            next_escalation = db.create_mercury_escalation(
+                tenant_id=escalation.tenant_id,
+                lead_id=escalation.lead_id,
+                level=next_level,
+                owner_phone=owner_phone,
+                escalation_key=f"mercury:{escalation.tenant_id}:{escalation.lead_id}:{next_level}",
+            )
+            attempt = db.create_communication_attempt(
+                tenant_id=escalation.tenant_id,
+                lead_id=escalation.lead_id,
+                channel="sms",
+                provider="twilio",
+                payload_snapshot={
+                    "to_phone": owner_phone,
+                    "message": (
+                        f"MERCURY MODE ESCALATION L{next_level}: Lead #{escalation.lead_id} "
+                        "still unclaimed. Reply ACCEPT to claim now."
+                    ),
+                },
+                idempotency_key=f"mercury-alert:{next_escalation.id}",
+                status="pending",
+            )
+            db.create_lead_event(
+                escalation.tenant_id,
+                escalation.lead_id,
+                "mercury.escalated",
+                {
+                    "from_escalation_id": escalation.id,
+                    "to_escalation_id": next_escalation.id,
+                    "attempt_id": attempt.id,
+                    "level": next_level,
+                },
+            )
+            advanced += 1
+        return {"processed": processed, "advanced": advanced}
+    except Exception as exc:
+        db.log_error("workers.process_pending_mercury_escalations_task", exc)
+        raise self.retry(exc=exc, countdown=30 * (self.request.retries + 1))
     finally:
         session.close()
-
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    # Retry failed communications every 15 minutes
-    sender.add_periodic_task(900.0, retry_failed_communications_task.s(), name='retry-failed-comms')
-
-@celery.task
-def retry_failed_communications_task():
-    """Scan and retry failed communications"""
-    session = SessionLocal()
-    # This would need a way to iterate through tenants or a global query
-    # For MVP, let's assume we query all failed comms with attempt_count < 3
-    failed_comms = session.query(DatabaseManager.Communication).filter(
-        DatabaseManager.Communication.status == 'failed',
-        DatabaseManager.Communication.attempt_count < 3
-    ).all()
-    
-    for comm in failed_comms:
-        # Re-dispatch based on channel
-        logger.info(f"Retrying communication {comm.id}")
-        # Implementation details omitted for brevity but should call send_email/twilio again
-    session.close()
-
-def send_email(to_email: str, subject: str, body: str):
-    """Helper to send email via SMTP"""
-    if not GMAIL_USER or not GMAIL_PASS:
-        logger.warning("Email credentials missing, skipping send")
-        return
-
-    msg = MIMEMultipart()
-    msg['From'] = GMAIL_USER
-    msg['To'] = to_email
-    msg['Subject'] = subject
-    msg.attach(MIMEText(body, 'plain'))
-
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-        server.login(GMAIL_USER, GMAIL_PASS)
-        server.send_message(msg)

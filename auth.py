@@ -7,7 +7,7 @@ from flask import request, g, jsonify
 from functools import wraps
 import uuid
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("FLASK_SECRET_KEY", "lexbridge-jwt-dev"))
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440 # 24 hours
 
@@ -40,9 +40,11 @@ def require_auth(f):
             
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            g.tenant_id = uuid.UUID(payload.get("tenant_id"))
-            g.user_id = uuid.UUID(payload.get("user_id"))
+            g.tenant_id = payload.get("tenant_id")
+            g.user_id = payload.get("user_id")
             g.role = payload.get("role")
+            if not g.tenant_id or not g.user_id:
+                return jsonify({"msg": "Token is invalid"}), 401
         except (JWTError, ValueError):
             return jsonify({"msg": "Token is invalid"}), 401
             
